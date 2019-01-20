@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import * as d3 from 'd3';
+import content from './components/_content.js';
 import './App.css';
 
 export default class App extends PureComponent {
@@ -8,104 +9,17 @@ export default class App extends PureComponent {
     this.state = {
       rows: undefined,
       cols: undefined,
+      loaded: false,
+      skills: false,
+      projects: false,
+      contact: false,
+      links: false,
       showProject: false
     };
-    this.grid = [];
+    this.alpha = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
     this.fontHeight = 14;
     this.fontWidth = this.fontHeight * (2 / 3);
-    this.alpha = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-    this.text = [
-      {
-        str: 'this is not a website',
-        t: 1000,
-        fill: '#FFFFFF',
-        posX: .5,
-        posY: .5,
-      },
-      {
-        str: 'm. parker kozak',
-        t: 2000,
-        fill: '#CB3030',
-        posX: .75,
-        posY: .6,
-      },
-      {
-        str: 'skills',
-        t: 2500,
-        fill: '#FDA50F',
-        posX: .7,
-        posY: .4,
-        subset: true
-      },
-      {
-        str: 'projects',
-        t: 2750,
-        fill: '#FDA50F',
-        posX: .22,
-        posY: .18,
-        subset: true
-      },
-      {
-        str: 'contact',
-        t: 3000,
-        fill: '#FDA50F',
-        posX: .85,
-        posY: .75,
-        subset: true
-      },
-      {
-        str: 'links',
-        t: 3250,
-        fill: '#FDA50F',
-        posX: .15,
-        posY: .9,
-        subset: true
-      }
-    ];
-    this.skills = {
-      els: ['css', 'html', 'bash', 'sql', 'express', 'node', 'd3+svg', 'react', 'webaudio api', 'javascript'],
-      fill: '#20BB20',
-      offsetX: 1,
-      offsetY: -2,
-      deltaX: .3,
-      deltaY: -1
-    };
-    this.projects = {
-      els: {
-        'drive my car': { url: 'http://kozak.digital/_drivebeta/' },
-        'sleepy': { url: 'https://sleepy-kozak.herokuapp.com/' },
-        'αdex': { url: 'https://kozak-adex.surge.sh/' }
-      },
-      fill: '#0089FF',
-      offsetX: 0,
-      offsetY: 2,
-      deltaX: .5,
-      deltaY: 2
-    };
-    this.contact = {
-      els: {
-        'mparkerkozak@gmail.com': { url: 'mailto:mparkerkozak@gmail.com' }
-      },
-      fill: '#20A0A1',
-      offsetX: -15,
-      offsetY: 2,
-      deltaX: 0,
-      deltaY: 1
-    };
-    this.links = {
-      els: {
-        resume: {  url: 'http://kozak.digital/_files/kozak_resume.pdf' },
-        imdb: { url: 'https://www.imdb.com/name/nm3362994/' },
-        github: { url: 'https://github.com/mpkozak' },
-        linkedin: { url: 'https://www.linkedin.com/in/mpkozak/' },
-        codepen: { url: 'https://codepen.io/mpkozak/pen/XoWNOQ' }
-      },
-      fill: '#8E00FF',
-      offsetX: 2,
-      offsetY: -2,
-      deltaX: .75,
-      deltaY: -2
-    };
+    this.grid = [];
 
     this.setSize = this.setSize.bind(this);
     this.handleResize = this.handleResize.bind(this);
@@ -117,197 +31,169 @@ export default class App extends PureComponent {
     return this.alpha[Math.floor(Math.random() * 26)];
   };
 
-  emptyGrid(cols, rows) {
+  emptyGrid(cols, rows, noDelay) {
     const grid = [];
-    const tScalar = 250 / (cols * rows)
+    const tScalar = 250 / (cols * rows);
     let id = 0;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        grid.push({
-          c,
-          r,
-          id: `cel${id++}`,
-          text: this.randomLetter(),
-          delay: 100 * (((2 * r) + c) * tScalar + Math.random())
-        });
+        const cel = { c, r };
+        cel.id = `cel${id++}`;
+        cel.text = this.randomLetter();
+        // cel.delay = 100 * (((2 * r) + c) * tScalar + Math.random());
+        // cel.delay = (noDelay ? 1 : 100) * (((2 * r) + c) * tScalar + Math.random());
+        cel.delay = 100 * ((noDelay ? 1 : ((2 * r) + c)) * tScalar + Math.random());
+        grid.push(cel);
       };
     };
     return grid;
   };
 
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
+    Object.assign(this, content);
     this.setSize();
-  };
-
-  componentDidUpdate() {
-    // console.log('componentDidUpdate')
+    window.addEventListener('resize', this.handleResize);
+    setTimeout(() => this.setState(prevState => ({ loaded: true })), 3500);
   };
 
   setSize() {
-    const { fontWidth, fontHeight } = this;
+    const { fontWidth, fontHeight, text } = this;
+    const { loaded } = this.state;
     const { svg } = this.refs;
-    const cols = Math.floor((Math.max(window.innerWidth, 550) * .95) / fontWidth);
-    const rows = Math.floor((Math.max(window.innerHeight, 450) * .95) / fontHeight);
+    const cols = Math.floor((d3.max([window.innerWidth, 550]) * .95) / fontWidth);
+    const rows = Math.floor((d3.max([window.innerHeight, 450]) * .95) / fontHeight);
     const width = cols * fontWidth;
     const height = rows * fontHeight;
+
+    d3.selectAll('text').remove();
     svg.style.width = width;
     svg.style.height = height;
-    d3.select(svg).selectAll('text').remove();
     svg.setAttribute('viewbox', `0 0 ${width} ${height}`);
-    this.grid = this.emptyGrid(cols, rows);
-    this.drawGrid(this.grid);
-    this.text.forEach(d => {
-      setTimeout(() => {
-        this.populateGrid(d);
-      }, d.t);
+    this.grid = this.emptyGrid(cols, rows, loaded);
+
+    text.forEach(d => {
+      if (loaded) d.delayIncr = false;
+      this.introTimeout = setTimeout(() => {
+        const queue = this.populateGrid(d);
+        this.undrawGrid(queue);
+        this.drawGrid(queue);
+      }, loaded ? 0 : d.t);
     });
+
+    this.drawGrid(this.grid);
     this.setState(prevState => ({ cols, rows }));
   };
 
   drawGrid(cels) {
     const { fontWidth, fontHeight } = this;
-    const { svg } = this.refs;
-    const text = d3.select(svg).selectAll('g').data(cels);
-    text.enter().append('text')
-      .attr('id', d => d.id)
-      .attr('class', d => d.class ? d.class : null)
-      .attr('x', d => d.c * fontWidth)
-      .attr('y', d => d.r * fontHeight)
-      .text(d => d.text)
-      .attr('font-size', fontHeight)
-      .attr('fill', d => d.fill ? d.fill : '#999999')
-      .attr('text-anchor', 'start')
-      .attr('alignment-baseline', 'hanging')
-      .attr('opacity', 0)
-    .transition().delay(d => d.delay)
-      .attr('opacity', d => d.opacity ? d.opacity : .5);
+    d3.select(this.refs.svg).selectAll('g')
+      .data(cels).enter().append('text')
+        .text(d => d.text)
+        .attr('id', d => d.id)
+        .attr('class', d => d.cl ? d.cl : null)
+        .attr('x', d => d.c * fontWidth)
+        .attr('y', d => d.r * fontHeight)
+        .attr('font-size', fontHeight)
+        .attr('fill', d => d.fill ? d.fill : '#999999')
+        .attr('text-anchor', 'start')
+        .attr('alignment-baseline', 'hanging')
+        .attr('opacity', 0)
+      .transition().delay(d => d.delay)
+        .attr('opacity', d => d.cl ? 1 : .5);
   };
 
   undrawGrid(cels) {
     d3.selectAll('.delete').remove();
     cels.forEach(d => {
-      const cel = d3.select(`#${d.id}`);
-      cel.attr('class', 'delete').attr('id', null)
-        .transition().delay(d.delay / 2)
-        .attr('opacity', 0)
-        .remove();
+      d3.select(`#${d.id}`)
+        .attr('class', 'delete')
+        .attr('id', null)
+        .transition()
+          .delay(d.delay / 1.5)
+          .attr('opacity', 0)
+          .remove();
     });
-  };
-
-  populateGrid(el) {
-    const { cols, rows } = this.state;
-    const arr = el.str.split('');
-    let c = Math.floor(el.posX * cols - arr.length / 2);
-    let r = Math.floor(el.posY * rows);
-    const queue = [];
-    arr.forEach((d, i) => {
-      const cel = this.grid[r * cols + c];
-      if (d !== ' ') {
-        cel.text = d;
-        cel.fill = el.fill;
-        cel.opacity = 1;
-        cel.delay = 500 * ((i / arr.length) + Math.random());
-        cel.static = true;
-        cel.subset = el.subset ? el.str : false;
-        queue.push(cel);
-      };
-      c++;
-    });
-    this.undrawGrid(queue);
-    this.drawGrid(queue);
   };
 
   letterSwap(cel) {
     cel.text = this.randomLetter();
-    const el = d3.select(`#${cel.id}`)
-    el.transition(250)
-      .attr('opacity', 0)
-    .transition(500)
-      .text(cel.text)
-      .attr('opacity', .5);
+    d3.select(`#${cel.id}`)
+      .transition(250)
+        .attr('opacity', 0)
+      .transition(500)
+        .text(cel.text)
+        .attr('opacity', .5);
+  };
+
+  populateGrid(entry) {
+    const { str, posX, posY, fill, cl, hover, adjC, adjR, action, delayIncr = 1 } = entry;
+    const { cols, rows } = this.state;
+    const queue = [];
+    const r = Math.floor(posY * rows) + (adjR ? adjR : 0);
+    let c = Math.floor((posX * cols) + (adjC ? adjC : (-str.length / 2)));
+    str.split('').forEach((text, i) => {
+      const cel = this.grid[cols * r + c++];
+      if (text !== ' ') {
+        if (delayIncr) cel.delay = 250 * (((delayIncr + i) / str.length) + Math.random());
+        queue.push(Object.assign(cel, {
+          text, fill, cl, hover, action
+        }));
+      };
+    });
+    return queue;
   };
 
   showSubset(key) {
-    const { cols, rows } = this.state;
-    const { posX, posY } = this.text.filter(d => d.str === key)[0];
-    const subset = this[key];
-    const { els, fill, offsetX, offsetY, deltaX, deltaY } = subset;
-    let r = Math.floor(posY * rows) + offsetY;
+    const { display, fill, posX, posY, offsetX, offsetY, deltaX, deltaY } = this[key];
     const queue = [];
-    Object.keys(els).forEach((d, i) => {
-      const url = els[d].url;
-      const text = url ? d : els[d];
-      const arr = text.split('');
-      let c = Math.floor(posX * cols + offsetX + i * deltaX + 2 * (Math.random() -.5));
-      arr.forEach((f, j) => {
-        const cel = this.grid[r * cols + c];
-        if (f !== ' ') {
-          cel.class = key;
-          cel.url = url;
-          cel.text = f;
-          cel.fill = fill;
-          cel.opacity = 1;
-          cel.delay = 250 * ((((i / 2) + j) / arr.length) + Math.random());
-          cel.static = true;
-          cel.subset = false;
-          queue.push(cel);
-        };
-        c++;
-      })
-      r += deltaY;
+    display.forEach((d, i) => {
+      const { str, action } = d;
+      const adjR = offsetY + (deltaY * i);
+      const adjC = offsetX + (deltaX * i) + (2 * Math.random() - 1);
+      queue.push(...this.populateGrid({
+        cl: key, delayIncr: ((i + 1) / 2), str, posX, posY, fill, adjR, adjC, action
+      }));
     });
     this.undrawGrid(queue);
     this.drawGrid(queue);
   };
 
   hideSubset(key) {
-    const cels = this.grid.filter(d => d.class === key);
+    const cels = this.grid.filter(d => d.cl === key);
     const queue = [];
     cels.forEach((cel, i) => {
-      cel.class = false;
-      cel.url = false;
-      cel.text = this.randomLetter();
-      cel.fill = false;
-      cel.opacity = false;
-      cel.static = false;
-      queue.push(cel);
+      let fill, cl, hover, action;
+      queue.push(Object.assign(cel, {
+        text: this.randomLetter(), fill, cl, hover, action
+      }));
     });
     this.undrawGrid(queue);
     this.drawGrid(queue);
   };
 
+
+
   handleResize() {
     const { svg } = this.refs;
     svg.style.width = 0;
     svg.style.height = 0;
-    clearTimeout(this.resetSize);
-    this.resetSize = setTimeout(this.setSize, 500);
+    clearTimeout(this.introTimeout);
+    clearTimeout(this.hoverTimeout);
+    this.hoverTimeout = setTimeout(this.setSize, 500);
   };
 
   handleHover(e) {
-    const { grid } = this;
-    const index = grid.findIndex(d => d.id === e.target.id);
-    if (~index) {
-      const cel = grid[index];
-      const { subset } = cel;
-      if (!cel.static && !cel.class) {
-        this.letterSwap(cel);
-      } else if (subset) {
-        clearTimeout(this.toggleSubset);
-        this.toggleSubset = setTimeout(() => {
-          const active = this.state[subset];
-          if (active) {
-            this.setState(
-              prevState => ({ [subset]: false }),
-              () => this.hideSubset(subset)
-            );
-          } else {
-            this.setState(
-              prevState => ({ [subset]: true }),
-              () => this.showSubset(subset)
-            );
-          };
+    // const cel = this.grid.find(d => d.id === e.target.id);
+    const cel = this.grid[e.target.id.substring(3)];
+    if (cel) {
+      const { cl, hover } = cel;
+      if (!cl) this.letterSwap(cel);
+      else if (hover) {
+        clearTimeout(this.hoverTimeout);
+        this.hoverTimeout = setTimeout(() => {
+          if (this.state[hover]) this.hideSubset(hover);
+          else this.showSubset(hover);
+          this.setState(prevState => ({ [hover]: !prevState[hover] }));
         }, 250);
       };
     };
@@ -315,20 +201,29 @@ export default class App extends PureComponent {
 
   handleClick(e) {
     const cel = this.grid[e.target.id.substring(3)];
-    if (cel && cel.class && cel.url) {
-      if (cel.class === 'projects') {
-        console.log(cel.class && cel.url)
-      } else {
-        window.location = cel.url;
+    if (cel) {
+      const { cl, action } = cel;
+      if (action) {
+        switch (cl) {
+          case 'projects' :
+            console.log('open project ', action);
+            this.setState(prevState => ({ showProject: action }));
+            break;
+          case 'links' :
+            window.open(action, '_blank')
+            break;
+          case 'contact' :
+            window.location = action;
+            break;
+          default : return null
+        };
       };
     };
   };
 
 
-
   render() {
     const { showProject } = this.state;
-
     return (
       <div className="App">
         <svg className="main" ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
@@ -344,3 +239,25 @@ export default class App extends PureComponent {
     // const dom = nodes ? nodes.length : null;
     // const grid = this.grid.length;
     // console.log(dom - grid)
+
+
+
+
+    // console.time('find')
+    // const find = this.grid.find(d => d.id === e.target.id);
+    // console.log(find)
+    // console.timeEnd('find')
+
+
+
+    // console.time('direct')
+    // const direct = this.grid[e.target.id.substring(3)];
+    // console.log(direct)
+    // console.timeEnd('direct')
+
+
+        // (cl === 'links') && window.open(action, '_blank');
+        // (cl === 'contact') && window.location = action;
+
+
+    // const { posX, posY } = this.text.find(d => d.hover === key);
