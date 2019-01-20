@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
 import * as d3 from 'd3';
+import { randomLetter, emptyGrid } from './components/_help.js';
 import content from './components/_content.js';
+import Project from './components/Project.js';
 import './App.css';
 
 export default class App extends PureComponent {
@@ -16,9 +18,8 @@ export default class App extends PureComponent {
       links: false,
       showProject: false
     };
-    this.alpha = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-    this.fontHeight = 14;
-    this.fontWidth = this.fontHeight * (2 / 3);
+    this.fontSize = 14;
+    this.fontWidth = this.fontSize * (2 / 3);
     this.grid = [];
 
     this.setSize = this.setSize.bind(this);
@@ -27,52 +28,30 @@ export default class App extends PureComponent {
     this.handleClick = this.handleClick.bind(this);
   };
 
-  randomLetter() {
-    return this.alpha[Math.floor(Math.random() * 26)];
-  };
-
-  emptyGrid(cols, rows, noDelay) {
-    const grid = [];
-    const tScalar = 250 / (cols * rows);
-    let id = 0;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const cel = { c, r };
-        cel.id = `cel${id++}`;
-        cel.text = this.randomLetter();
-        // cel.delay = 100 * (((2 * r) + c) * tScalar + Math.random());
-        // cel.delay = (noDelay ? 1 : 100) * (((2 * r) + c) * tScalar + Math.random());
-        cel.delay = 100 * ((noDelay ? 1 : ((2 * r) + c)) * tScalar + Math.random());
-        grid.push(cel);
-      };
-    };
-    return grid;
-  };
-
   componentDidMount() {
     Object.assign(this, content);
-    this.setSize();
     window.addEventListener('resize', this.handleResize);
+    this.setSize();
     setTimeout(() => this.setState(prevState => ({ loaded: true })), 3500);
   };
 
   setSize() {
-    const { fontWidth, fontHeight, text } = this;
+    const { fontSize, fontWidth, text } = this;
     const { loaded } = this.state;
     const { svg } = this.refs;
-    const cols = Math.floor((d3.max([window.innerWidth, 550]) * .95) / fontWidth);
-    const rows = Math.floor((d3.max([window.innerHeight, 450]) * .95) / fontHeight);
+    const cols = Math.floor((Math.max(window.innerWidth, 550) * .95) / fontWidth);
+    const rows = Math.floor((Math.max(window.innerHeight, 450) * .95) / fontSize);
     const width = cols * fontWidth;
-    const height = rows * fontHeight;
+    const height = rows * fontSize;
 
     d3.selectAll('text').remove();
     svg.style.width = width;
     svg.style.height = height;
     svg.setAttribute('viewbox', `0 0 ${width} ${height}`);
-    this.grid = this.emptyGrid(cols, rows, loaded);
 
+    this.drawGrid(this.grid = emptyGrid(cols, rows, loaded));
     text.forEach(d => {
-      if (loaded) d.delayIncr = false;
+      d.delayIncr = !loaded;
       this.introTimeout = setTimeout(() => {
         const queue = this.populateGrid(d);
         this.undrawGrid(queue);
@@ -80,20 +59,19 @@ export default class App extends PureComponent {
       }, loaded ? 0 : d.t);
     });
 
-    this.drawGrid(this.grid);
     this.setState(prevState => ({ cols, rows }));
   };
 
   drawGrid(cels) {
-    const { fontWidth, fontHeight } = this;
+    const { fontSize, fontWidth } = this;
     d3.select(this.refs.svg).selectAll('g')
       .data(cels).enter().append('text')
         .text(d => d.text)
         .attr('id', d => d.id)
-        .attr('class', d => d.cl ? d.cl : null)
+        .attr('class', d => d.cl ? d.cl : undefined)
         .attr('x', d => d.c * fontWidth)
-        .attr('y', d => d.r * fontHeight)
-        .attr('font-size', fontHeight)
+        .attr('y', d => d.r * fontSize)
+        .attr('font-size', fontSize)
         .attr('fill', d => d.fill ? d.fill : '#999999')
         .attr('text-anchor', 'start')
         .attr('alignment-baseline', 'hanging')
@@ -107,7 +85,7 @@ export default class App extends PureComponent {
     cels.forEach(d => {
       d3.select(`#${d.id}`)
         .attr('class', 'delete')
-        .attr('id', null)
+        .attr('id', undefined)
         .transition()
           .delay(d.delay / 1.5)
           .attr('opacity', 0)
@@ -115,15 +93,53 @@ export default class App extends PureComponent {
     });
   };
 
+  hideGrid(cels) {
+    cels.forEach(d => {
+      d3.select(`#${d.id}`)
+        .attr('class', 'hidden')
+        .transition()
+          .delay(d.delay / 1.5)
+          .attr('opacity', 0)
+    });
+  };
+
+  showGrid(cels) {
+    // setTimeout(() => this.setState(prevState => ({ showProject: false, hidden: undefined })), 1000)
+    this.setState(prevState => ({ showProject: false, hidden: undefined }));
+    cels.forEach(d => {
+      d3.select(`#${d.id}`)
+        .attr('class', d.cl)
+        .transition()
+          .delay(d.delay / 1.5)
+          .attr('opacity', d.cl ? 1 : .5);
+    });
+  };
+
   letterSwap(cel) {
-    cel.text = this.randomLetter();
+    cel.text = randomLetter();
     d3.select(`#${cel.id}`)
-      .transition(250)
+      .transition()
         .attr('opacity', 0)
-      .transition(500)
+      .transition()
         .text(cel.text)
         .attr('opacity', .5);
   };
+
+  // letterSwap(cel) {
+  //   const { fontSize, fontWidth } = this;
+  //   cel.text = randomLetter();
+  //   d3.select(`#${cel.id}`)
+  //     .transition().duration(100)
+  //       .attr('x', (cel.c + .5) * fontWidth)
+  //       .attr('y', (cel.r + .5) * fontSize)
+  //       .attr('font-size', 0)
+  //       .attr('opacity', 0)
+  //     .transition().duration(250)
+  //       .attr('x', cel.c * fontWidth)
+  //       .attr('y', cel.r * fontSize)
+  //       .attr('font-size', fontSize)
+  //       .attr('opacity', .5);
+  // };
 
   populateGrid(entry) {
     const { str, posX, posY, fill, cl, hover, adjC, adjR, action, delayIncr = 1 } = entry;
@@ -164,14 +180,12 @@ export default class App extends PureComponent {
     cels.forEach((cel, i) => {
       let fill, cl, hover, action;
       queue.push(Object.assign(cel, {
-        text: this.randomLetter(), fill, cl, hover, action
+        text: randomLetter(), fill, cl, hover, action
       }));
     });
     this.undrawGrid(queue);
     this.drawGrid(queue);
   };
-
-
 
   handleResize() {
     const { svg } = this.refs;
@@ -188,7 +202,7 @@ export default class App extends PureComponent {
     if (cel) {
       const { cl, hover } = cel;
       if (!cl) this.letterSwap(cel);
-      else if (hover) {
+      if (hover) {
         clearTimeout(this.hoverTimeout);
         this.hoverTimeout = setTimeout(() => {
           if (this.state[hover]) this.hideSubset(hover);
@@ -207,7 +221,7 @@ export default class App extends PureComponent {
         switch (cl) {
           case 'projects' :
             console.log('open project ', action);
-            this.setState(prevState => ({ showProject: action }));
+            this.showFrame(action);
             break;
           case 'links' :
             window.open(action, '_blank')
@@ -221,43 +235,80 @@ export default class App extends PureComponent {
     };
   };
 
+  showFrame(proj) {
+    const { rows, cols } = this.state;
+    const { fontSize, fontWidth } = this;
+    const marginY = 4;
+    const marginX = 20;
+
+    const queue = this.grid.filter(d => {
+      const x = marginX / 2;
+      const y = marginY / 2;
+      return (d.c >= x && d.c < (cols - x) && d.r >= y && d.r < (rows - y));
+    });
+
+
+    const frame = {
+      left: fontWidth * (marginX / 2) + 'px',
+      top: fontSize * (marginY / 2) + 'px',
+      width: (cols - marginX) * fontWidth + 'px',
+      height: (rows - marginY) * fontSize + 'px',
+      opacity: 1,
+    }
+
+    this.hideGrid(queue);
+    this.setState(prevState => ({ frame, showProject: proj, hidden: queue }));
+
+
+            // this.setState(prevState => ({  }));
+
+
+
+
+    // const { fontSize, fontWidth, grid } = this;
+
+    // const frameHeight = (rows * fontSize) * .8;
+    // const frameWidth = frameHeight * (16 / 9);
+
+    // const frameCols = Math.ceil(frameWidth / fontWidth);
+    // const frameRows = Math.ceil(frameHeight / fontSize);
+
+    // const startCol = (cols - frameCols) / 2;
+    // const endCol = startCol + frameCols;
+    // const startRow = (rows - frameRows) / 2;
+    // const endRow = startRow + frameRows;
+
+    // const queue = this.grid.filter(d => {
+    //   if (d.c >= startCol && d.c <= endCol && d.r >= startRow && d.r <= endRow)
+    //   return d;
+    // })
+
+    // this.undrawGrid(queue)
+
+
+    // const height = rows - 4;
+    // const width = Math.ceil(height * (16 / 9));
+    // const marginX = cols - Math.ceil((rows - marginY) * (fontSize / fontWidth));
+
+
+
+
+    // console.log(this.grid.length, queue.length)
+
+    // console.log(frameCols, frameRows)
+
+  }
+
 
   render() {
-    const { showProject } = this.state;
+    const { showProject, hidden, frame } = this.state;
     return (
       <div className="App">
-        <svg className="main" ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
+        <div className="main">
+          <svg ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
+          <Project proj={showProject} frame={frame} hide={() => this.showGrid(hidden)} />
+        </div>
       </div>
     );
   };
 };
-
-
-
-
-    // const nodes = d3.select(this.refs.svg).selectAll('text')._groups[0];
-    // const dom = nodes ? nodes.length : null;
-    // const grid = this.grid.length;
-    // console.log(dom - grid)
-
-
-
-
-    // console.time('find')
-    // const find = this.grid.find(d => d.id === e.target.id);
-    // console.log(find)
-    // console.timeEnd('find')
-
-
-
-    // console.time('direct')
-    // const direct = this.grid[e.target.id.substring(3)];
-    // console.log(direct)
-    // console.timeEnd('direct')
-
-
-        // (cl === 'links') && window.open(action, '_blank');
-        // (cl === 'contact') && window.location = action;
-
-
-    // const { posX, posY } = this.text.find(d => d.hover === key);
