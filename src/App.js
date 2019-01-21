@@ -1,8 +1,13 @@
 import React, { PureComponent } from 'react';
-import * as d3 from 'd3';
+// import * as d3 from 'd3';
+import * as selection from 'd3-selection';
+import * as transition from 'd3-transition';
 import { randomLetter, emptyGrid } from './components/_help.js';
 import content from './components/_content.js';
 import './App.css';
+
+const d3 = Object.assign(selection, transition);
+
 
 export default class App extends PureComponent {
   constructor(props) {
