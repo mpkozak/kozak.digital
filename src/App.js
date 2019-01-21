@@ -11,109 +11,64 @@ export default class App extends PureComponent {
       rows: undefined,
       cols: undefined,
       isLoaded: false,
-      // isLoaded: true,
+      resize: false,
 
       skills: false,
       projects: false,
       contact: false,
       links: false,
 
-      iframe: null,
-      url: null,
+      focus: false,
     };
 
     this.celRatio = (2 / 3);
     this.celHeight = 14;
     this.celWidth = this.celHeight * this.celRatio;
     this.grid = [];
+    this.url = '';
     this.iframeStyle = {};
 
-    this.makeGrid = this.makeGrid.bind(this);
     this.handleResize = this.handleResize.bind(this);
     this.handleHover = this.handleHover.bind(this);
     this.handleClick = this.handleClick.bind(this);
-
-    // this.randomPop = this.randomPop.bind(this);
+    this.makeGrid = this.makeGrid.bind(this);
   };
 
 
-// OLD EVENT LISTENERS
-  // handleHover(e) {
-  //   // const cel = this.grid.find(d => d.id === e.target.id);
-  //   const cel = this.grid[e.target.id.substring(3)];
-  //   if (cel) {
-  //     const { cl, hover } = cel;
-  //     if (!cl) this.letterSwap(cel);
-  //     if (hover) {
-  //       clearTimeout(this.hoverTimeout);
-  //       this.hoverTimeout = setTimeout(() => {
-  //         if (this.state[hover]) this.hideSubset(hover);
-  //         else this.showSubset(hover);
-  //         this.setState(prevState => ({ [hover]: !prevState[hover] }));
-  //       }, 150);
-  //     };
-  //   };
-  // };
-
-  // handleClick(e) {
-  //   const cel = this.grid[e.target.id.substring(3)];
-  //   // const cel = this.grid[e.substring(3)];
-
-  //   if (cel) {
-  //     const { cl, action } = cel;
-  //     if (action) {
-  //       switch (cl) {
-  //         case 'projects' :
-  //           console.log('open project ', action);
-  //           this.showIframe(action);
-  //           break;
-  //         case 'links' :
-  //           window.open(action, '_blank')
-  //           break;
-  //         case 'contact' :
-  //           window.location = action;
-  //           break;
-  //         // default : return null
-  //         default : console.log('default')
-  //       };
-  //     } else if (this.state.iframe) {
-  //       this.hideIframe();
-  //       // console.log('exit')
-  //     }
-  //   };
-  // };
-//
-
-
-
   handleResize() {
+    const { focus, resize } = this.state;
+    if (focus) {
+      this.url = false;
+      this.setState(prevState => ({ focus: false }));
+    }
+    if (!resize) {
+      clearTimeout(this.introTimeout);
+      clearTimeout(this.hoverTimeout);
+      this.setState(prevState => ({ resize: false }));
+      this.undrawGrid(this.grid);
+    };
     clearTimeout(this.resizeTimeout);
-    const { svg } = this.refs;
-    svg.style.width = 0;
-    svg.style.height = 0;
-    clearTimeout(this.introTimeout);
-    clearTimeout(this.hoverTimeout);
-    this.resizeTimeout = setTimeout(this.makeGrid, 100);
+    this.resizeTimeout = setTimeout(this.makeGrid, 500);
   };
 
   handleHover(cel) {
     const { cl, hover } = cel;
-    if (!cl) {
-      this.letterSwap(cel);
-    } else if (hover) {
+    if (hover) {
       clearTimeout(this.hoverTimeout);
       this.hoverTimeout = setTimeout(() => {
         if (this.state[hover]) this.hideSubset(hover);
         else this.showSubset(hover);
         this.setState(prevState => ({ [hover]: !prevState[hover] }));
       }, 200);
+    } else if (!cl) {
+      this.letterSwap(cel);
     };
   };
 
   handleClick(cel) {
     const { cl, action } = cel;
-    const { iframe } = this.state;
-    if (iframe) {
+    const { focus } = this.state;
+    if (focus) {
       this.hideIframe();
     } else if (action) {
       switch (cl) {
@@ -131,6 +86,7 @@ export default class App extends PureComponent {
     };
   };
 
+
   componentDidMount() {
     Object.assign(this, content);
     window.addEventListener('resize', this.handleResize);
@@ -141,8 +97,8 @@ export default class App extends PureComponent {
     const { celHeight, celWidth, text } = this;
     const { isLoaded } = this.state;
     const { svg } = this.refs;
-    const cols = Math.floor((Math.max(window.innerWidth, 550) * .95) / celWidth);
-    const rows = Math.floor((Math.max(window.innerHeight, 450) * .95) / celHeight);
+    const cols = Math.floor((Math.max(window.innerWidth, 585) * .95) / celWidth);
+    const rows = Math.floor((Math.max(window.innerHeight, 480) * .95) / celHeight);
     const width = cols * celWidth;
     const height = rows * celHeight;
 
@@ -151,7 +107,7 @@ export default class App extends PureComponent {
     svg.style.height = height;
     svg.setAttribute('viewbox', `0 0 ${width} ${height}`);
 
-    this.drawGrid(this.grid = emptyGrid(cols, rows, isLoaded ? 100 : 500));
+    this.drawGrid(this.grid = emptyGrid(cols, rows, isLoaded ? 250 : 500));
     text.forEach(d => {
       d.delayIncr = !isLoaded;
       this.introTimeout = setTimeout(() => {
@@ -161,8 +117,9 @@ export default class App extends PureComponent {
       }, isLoaded ? 0 : d.t);
     });
 
-    this.setState(prevState => ({ cols, rows, isLoaded: true }));
+    this.setState(prevState => ({ cols, rows, isLoaded: true, resize: false }));
   };
+
 
   drawGrid(cels) {
     const { celHeight, celWidth } = this;
@@ -182,25 +139,10 @@ export default class App extends PureComponent {
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
         .attr('opacity', d => d.cl ? 1 : .5);
-
-    // d3.select(this.refs.svg).selectAll('g')
-    //   .data(cels).enter().append('rect')
-    //     .attr('id', d => d.id)
-    //     .attr('class', d => d.cl ? d.cl : undefined)
-    //     .attr('x', d => d.c * celWidth)
-    //     .attr('y', d => d.r * celHeight)
-    //     .attr('width', celWidth)
-    //     .attr('height', celHeight)
-    //     .attr('fill', d => d.fill ? d.fill : '#999999')
-    //     .attr('stroke', 'white')
-    //     .attr('stroke-width', '.1px')
-    //     .attr('opacity', 0)
-    //   .transition().delay(d => d.delay)
-    //     .attr('opacity', d => d.cl ? 1 : .5);
   };
 
   undrawGrid(cels) {
-    // d3.selectAll('.delete').remove();
+    d3.selectAll('.delete').remove();
     cels.forEach(d => {
       d3.select(`#${d.id}`)
         .attr('class', 'delete')
@@ -273,12 +215,6 @@ export default class App extends PureComponent {
     this.replaceCels(cels);
   };
 
-
-
-
-
-
-
   setIframeDimensions(ratio) {
     const { celHeight, celWidth, celRatio } = this;
     const { rows, cols } = this.state;
@@ -300,6 +236,38 @@ export default class App extends PureComponent {
     return { width, height, startCol, startRow };
   };
 
+  showIframe(focus) {
+    const { url, ratio } = this.projects.data[focus];
+    this.url = url;
+    const { width, height, startCol, startRow } = this.setIframeDimensions(ratio);
+    this.setState(prevState => ({ focus }));
+    const clear = this.grid.filter(d =>
+      d.c >= startCol &&
+      d.c < (startCol + width) &&
+      d.r >= startRow &&
+      d.r < (startRow + height)
+    );
+    this.hideSubset();
+    clear.forEach(d => {
+      d.cl = 'hidden';
+      d.delay = 1500 * Math.random();
+    });
+    this.undrawGrid(clear);
+  };
+
+  hideIframe() {
+    // this.replaceCels(this.grid.filter(d => d.cl === 'hidden' || d.cl === 'info'));
+    this.replaceCels(this.grid.filter(d => d.cl === 'hidden'));
+    this.text.forEach(d => {
+      const queue = this.populateGrid(d);
+      this.undrawGrid(queue);
+      this.drawGrid(queue);
+    });
+      this.url = false;
+      this.setState(prevState => ({ focus: false }));
+  };
+
+
 // add text to grid baced on project info
     // const { name, date, tech, git }
     // const posX = startCol / cols;
@@ -315,114 +283,22 @@ export default class App extends PureComponent {
     //   this.drawGrid(grid);
     // });
 
-  showIframe(focus) {
-    const { url, ratio } = this.projects.data[focus];
-    const { width, height, startCol, startRow } = this.setIframeDimensions(ratio);
-    const clear = this.grid.filter(d =>
-      d.c >= startCol &&
-      d.c < (startCol + width) &&
-      d.r >= startRow &&
-      d.r < (startRow + height)
-    );
-    this.hideSubset();
-    clear.forEach(d => {
-      d.cl = 'hidden';
-      d.delay = 1000 * Math.random();
-    });
-    this.undrawGrid(clear);
-    this.setState(prevState => ({ iframe: focus, url }));
-  };
-
-  hideIframe() {
-    this.replaceCels(this.grid.filter(d => d.cl === 'hidden' || d.cl === 'info'));
-    this.text.forEach(d => {
-      const queue = this.populateGrid(d);
-      this.undrawGrid(queue);
-      this.drawGrid(queue);
-    });
-    this.setState(prevState => ({ iframe: false, url: '#' }));
-  };
-
-
-
-
-
-
-
-
-// POP
-  randomPop() {
-    const { grid } = this;
-    const cel = grid[Math.floor(Math.random() * grid.length)];
-    if (!cel.cl) this.letterPop(cel);
-    // setTimeout(this.randomPop, 500 + (Math.random() * 2000));
-  };
-
-  letterPop(cel, type) {
-    const { celHeight, celWidth } = this;
-    cel.text = randomLetter();
-    const speed = 1000;
-    const scalars = [[.5, 0], [-1.75, 5]];
-    if (Math.random() < 0.5) scalars.reverse();
-    d3.select(`#${cel.id}`)
-      .transition().ease(d3.easeCircle).duration(speed)
-        .attr('x', (cel.c + scalars[0][0]) * celWidth)
-        .attr('y', (cel.r + scalars[0][0]) * celHeight)
-        .attr('font-size', scalars[0][1] * celHeight)
-        .attr('opacity', 0)
-      .transition().duration(100)
-        .attr('x', (cel.c + scalars[1][0]) * celWidth)
-        .attr('y', (cel.r + scalars[1][0]) * celHeight)
-        .attr('font-size', scalars[1][1] * celHeight)
-        .text(cel.text)
-      .transition().ease(d3.easeElastic).duration(speed)
-        .attr('x', cel.c * celWidth)
-        .attr('y', cel.r * celHeight)
-        .attr('font-size', celHeight)
-        .attr('opacity', .5);
-    // d3.select(`#${cel.id}`)
-    //   .transition().ease(d3.easeExp).duration(speed / 2)
-    //     .attr('opacity', 1)
-    //   .transition().ease(d3.easeCircle).duration(speed)
-    //     .attr('x', (cel.c + scalars[0][0]) * celWidth)
-    //     .attr('y', (cel.r + scalars[0][0]) * celHeight)
-    //     .attr('width', scalars[0][1] * celWidth)
-    //     .attr('height', scalars[0][1] * celHeight)
-    //     .attr('opacity', 0)
-    //   .transition().duration(0)
-    //     .text(cel.text)
-    //     .attr('x', (cel.c + scalars[1][0]) * celWidth)
-    //     .attr('y', (cel.r + scalars[1][0]) * celHeight)
-    //     .attr('width', scalars[1][1] * celWidth)
-    //     .attr('height', scalars[1][1] * celHeight)
-    //   .transition().ease(d3.easeElastic).duration(speed / 2)
-    //     .attr('x', cel.c * celWidth)
-    //     .attr('y', cel.r * celHeight)
-    //     .attr('width', celWidth)
-    //     .attr('height', celHeight)
-    //     .attr('opacity', .5);
-  };
-//
-
-
-
-
 
 
   render() {
-    const { iframe, url } = this.state;
-    const toggleHide = iframe ? 'active' : 'hidden'
-    const { iframeStyle } = this;
+    const { url, iframeStyle } = this;
+    const { focus } = this.state;
+    const toggleHide = focus ? 'active' : 'hidden';
     return (
       <div className="App">
         <div className="main">
           <svg ref="svg" />
           <div id={'iframe-container'} className={toggleHide} style={iframeStyle}>
             <iframe
-              id={iframe ? iframe : null}
+              id={focus || null}
               className={toggleHide}
               allow="camera;microphone"
-              src={url}
+              src={url || null}
               title="project"
               scrolling="no"
             />
@@ -434,7 +310,15 @@ export default class App extends PureComponent {
 };
 
 
+
+
+
 {/*
+
+
+
+
+
             <iframe id={iframe ? iframe : null} className={iframe ? 'active' : 'hidden'} ref="iframe" allow="camera;microphone" src={url} title="display" scrolling="no" />
 
           <svg ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
@@ -442,3 +326,146 @@ export default class App extends PureComponent {
 
 */}
 
+
+
+// OLD EVENT LISTENERS
+  // handleHover(e) {
+  //   // const cel = this.grid.find(d => d.id === e.target.id);
+  //   const cel = this.grid[e.target.id.substring(3)];
+  //   if (cel) {
+  //     const { cl, hover } = cel;
+  //     if (!cl) this.letterSwap(cel);
+  //     if (hover) {
+  //       clearTimeout(this.hoverTimeout);
+  //       this.hoverTimeout = setTimeout(() => {
+  //         if (this.state[hover]) this.hideSubset(hover);
+  //         else this.showSubset(hover);
+  //         this.setState(prevState => ({ [hover]: !prevState[hover] }));
+  //       }, 150);
+  //     };
+  //   };
+  // };
+
+  // handleClick(e) {
+  //   const cel = this.grid[e.target.id.substring(3)];
+  //   // const cel = this.grid[e.substring(3)];
+
+  //   if (cel) {
+  //     const { cl, action } = cel;
+  //     if (action) {
+  //       switch (cl) {
+  //         case 'projects' :
+  //           console.log('open project ', action);
+  //           this.showIframe(action);
+  //           break;
+  //         case 'links' :
+  //           window.open(action, '_blank')
+  //           break;
+  //         case 'contact' :
+  //           window.location = action;
+  //           break;
+  //         // default : return null
+  //         default : console.log('default')
+  //       };
+  //     } else if (this.state.iframe) {
+  //       this.hideIframe();
+  //       // console.log('exit')
+  //     }
+  //   };
+  // };
+//
+
+
+
+// POP
+  // randomPop() {
+  //   const { grid } = this;
+  //   const cel = grid[Math.floor(Math.random() * grid.length)];
+  //   if (!cel.cl) this.letterPop(cel);
+  //   setTimeout(this.randomPop, 500 + (Math.random() * 2000));
+  // };
+
+  // letterPop(cel) {
+  //   const { celHeight, celWidth } = this;
+  //   cel.text = randomLetter();
+  //   const speed = 1000;
+  //   const scalars = [[.5, 0], [-1.75, 5]];
+  //   if (Math.random() < 0.5) scalars.reverse();
+  //   d3.select(`#${cel.id}`)
+  //     .transition().ease(d3.easeCircle).duration(speed)
+  //       .attr('x', (cel.c + scalars[0][0]) * celWidth)
+  //       .attr('y', (cel.r + scalars[0][0]) * celHeight)
+  //       .attr('font-size', scalars[0][1] * celHeight)
+  //       .attr('opacity', 0)
+  //     .transition().duration(100)
+  //       .attr('x', (cel.c + scalars[1][0]) * celWidth)
+  //       .attr('y', (cel.r + scalars[1][0]) * celHeight)
+  //       .attr('font-size', scalars[1][1] * celHeight)
+  //       .text(cel.text)
+  //     .transition().ease(d3.easeElastic).duration(speed)
+  //       .attr('x', cel.c * celWidth)
+  //       .attr('y', cel.r * celHeight)
+  //       .attr('font-size', celHeight)
+  //       .attr('opacity', .5);
+  //   // d3.select(`#${cel.id}`)
+  //   //   .transition().ease(d3.easeExp).duration(speed / 2)
+  //   //     .attr('opacity', 1)
+  //   //   .transition().ease(d3.easeCircle).duration(speed)
+  //   //     .attr('x', (cel.c + scalars[0][0]) * celWidth)
+  //   //     .attr('y', (cel.r + scalars[0][0]) * celHeight)
+  //   //     .attr('width', scalars[0][1] * celWidth)
+  //   //     .attr('height', scalars[0][1] * celHeight)
+  //   //     .attr('opacity', 0)
+  //   //   .transition().duration(0)
+  //   //     .text(cel.text)
+  //   //     .attr('x', (cel.c + scalars[1][0]) * celWidth)
+  //   //     .attr('y', (cel.r + scalars[1][0]) * celHeight)
+  //   //     .attr('width', scalars[1][1] * celWidth)
+  //   //     .attr('height', scalars[1][1] * celHeight)
+  //   //   .transition().ease(d3.easeElastic).duration(speed / 2)
+  //   //     .attr('x', cel.c * celWidth)
+  //   //     .attr('y', cel.r * celHeight)
+  //   //     .attr('width', celWidth)
+  //   //     .attr('height', celHeight)
+  //   //     .attr('opacity', .5);
+  // };
+//
+
+// BOX GRID
+  // drawGrid(cels) {
+  //   const { celHeight, celWidth } = this;
+  //   d3.select(this.refs.svg).selectAll('g')
+  //     .data(cels).enter().append('text')
+  //       .text(d => d.text)
+  //       .attr('id', d => d.id)
+  //       .attr('class', d => d.cl ? d.cl : undefined)
+  //       .attr('x', d => d.c * celWidth)
+  //       .attr('y', d => d.r * celHeight)
+  //       .attr('font-size', celHeight)
+  //       .attr('fill', d => d.fill ? d.fill : '#999999')
+  //       .attr('text-anchor', 'start')
+  //       .attr('alignment-baseline', 'hanging')
+  //       .attr('opacity', 0)
+  //       .on('mouseover', this.handleHover)
+  //       .on('click', this.handleClick)
+  //     .transition().delay(d => d.delay)
+  //       .attr('opacity', d => d.cl ? 1 : .5);
+
+  //   // d3.select(this.refs.svg).selectAll('g')
+  //   //   .data(cels).enter().append('rect')
+  //   //     .attr('id', d => d.id)
+  //   //     .attr('class', d => d.cl ? d.cl : undefined)
+  //   //     .attr('x', d => d.c * celWidth)
+  //   //     .attr('y', d => d.r * celHeight)
+  //   //     .attr('width', celWidth)
+  //   //     .attr('height', celHeight)
+  //   //     .attr('fill', d => d.fill ? d.fill : '#999999')
+  //   //     .attr('stroke', 'white')
+  //   //     .attr('stroke-width', '.1px')
+  //   //     .attr('opacity', 0)
+  //   //     .on('mouseover', this.handleHover)
+  //   //     .on('click', this.handleClick)
+  //   //   .transition().delay(d => d.delay)
+  //   //     .attr('opacity', d => d.cl ? 1 : .5);
+  // };
+//

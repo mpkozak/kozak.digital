@@ -90,10 +90,9 @@ content.projects = {
       date: 'september 2018',
       tech: 'javascript (vanilla), html, css',
       git: 'https://github.com/mpkozak/drive/',
-      // url: 'http://kozak.digital/_proj/drive/',
-      // ratio: (16 / 9)
-      url: 'http://kozak.digital/_drivebeta/',
-      ratio: (18 / 11)
+      // url: 'https://kozak.digital/_drivebeta/',
+      url: 'https://kozak-drive.surge.sh/',
+      ratio: (16 / 9)
     },
     sleepy: {
       name: 'sleepy',
@@ -108,8 +107,7 @@ content.projects = {
       date: 'december 2018',
       tech: 'webaudio api, react, d3',
       git: 'https://github.com/mpkozak/a.dex/',
-      // url: 'http://kozak-adex.surge.sh/',
-      url: 'http://abandoned-aftermath.surge.sh/',
+      url: 'https://kozak-adex.surge.sh/',
       ratio: (17 / 15)
     },
   },
@@ -163,35 +161,6 @@ content.links = {
   deltaX: .75,
   deltaY: -2
 };
-
-// content.projectData = {
-//   drive: {
-//     name: 'drive my car',
-//     date: 'september 2018',
-//     tech: 'javascript (vanilla), html, css',
-//     git: 'https://github.com/mpkozak/drive/',
-//     url: 'http://kozak.digital/_proj/drive/',
-//     ratio: (16 / 9)
-//   },
-//   sleepy: {
-//     name: 'sleepy',
-//     date: 'october 2018',
-//     tech: 'react, d3, sql, node, express',
-//     git: '#',
-//     url: 'https://sleepy-kozak.herokuapp.com/',
-//     ratio: (9 / 16)
-//   },
-//   adex: {
-//     name: 'αdex',
-//     date: 'december 2018',
-//     tech: 'webaudio api, react, d3',
-//     git: 'https://github.com/mpkozak/a.dex/',
-//     url: 'http://kozak-adex.surge.sh/',
-//     ratio: (4 / 3)
-//   },
-// };
-
-
 
 content.text.forEach(d => {
   d.cl = 'static';

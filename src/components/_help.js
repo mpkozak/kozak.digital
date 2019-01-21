@@ -19,32 +19,3 @@ export const emptyGrid = (cols, rows, delay = 100) => {
   };
   return grid;
 };
-
-
-
-
-
-
-
-    // console.time('emptyGrid')
-
-    // this.grid = await emptyGrid(cols, rows, 500);
-
-    // console.timeEnd('emptyGrid')
-
-
-      // grid.push({
-      //   c,
-      //   r,
-      //   id: `cel${id++}`,
-      //   text: randomLetter(),
-      //   delay: dScale * (tScalar * ((2 * r) + c) + Math.random()),
-      // });
-
-      // grid[id] = {
-      //   c,
-      //   r,
-      //   id: `cel${id++}`,
-      //   text: randomLetter(),
-      //   delay: dScale * (tScalar * ((2 * r) + c) + Math.random()),
-      // };
