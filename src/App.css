@@ -13,10 +13,6 @@
   position: relative;
 }
 
-text {
-  /*text-shadow: 1px 1px 2px #000000;*/
-}
-
 #iframe-container {
   position: absolute;
   display: flex;
@@ -24,30 +20,27 @@ text {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-
-  /*transition: opacity 2s ease-in;*/
-  opacity: 1;
-
-  /*box-shadow: 0 0 .5vmin .5vmin rgba(0, 0, 0, .5);*/
-
-  /*background-color: rgba(0, 255, 0, 1);*/
-  /*border: 1px solid green;*/
+  /*transition: opacity 1s ease-in-out;*/
+  transition: opacity 2s;
 }
 
 iframe {
   position: absolute;
   width: 100%;
   height: 100%;
-  opacity: 1;
-  transition: opacity 1s;
   border: none;
 }
 
 .hidden {
   opacity: 0;
+  pointer-events: none;
 }
 
-.drive {
+.active {
+  opacity: 1;
+}
+
+#drive {
   transform: scale(1.18, 1.26);
 }
 
@@ -55,7 +48,9 @@ iframe {
 
 
 
-
+text {
+  /*text-shadow: 1px 1px 2px #000000;*/
+}
 
 
 

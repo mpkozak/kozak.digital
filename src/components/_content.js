@@ -108,7 +108,8 @@ content.projects = {
       date: 'december 2018',
       tech: 'webaudio api, react, d3',
       git: 'https://github.com/mpkozak/a.dex/',
-      url: 'http://kozak-adex.surge.sh/',
+      // url: 'http://kozak-adex.surge.sh/',
+      url: 'http://abandoned-aftermath.surge.sh/',
       ratio: (17 / 15)
     },
   },
