@@ -4,7 +4,7 @@ const alpha = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
 
 export const randomLetter = () => alpha[Math.floor(Math.random() * 26)];
 
-export const emptyGrid = (cols, rows, noDelay) => {
+export const emptyGrid = (cols, rows, noDelay = true) => {
   const grid = [];
   const tScalar = 250 / (cols * rows);
   let id = 0;
@@ -19,3 +19,5 @@ export const emptyGrid = (cols, rows, noDelay) => {
   };
   return grid;
 };
+
+

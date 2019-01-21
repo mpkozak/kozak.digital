@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import * as d3 from 'd3';
 import { randomLetter, emptyGrid } from './components/_help.js';
 import content from './components/_content.js';
-import Project from './components/Project.js';
 import './App.css';
 
 export default class App extends PureComponent {
@@ -11,12 +10,16 @@ export default class App extends PureComponent {
     this.state = {
       rows: undefined,
       cols: undefined,
-      loaded: false,
+      // isLoaded: false,
+      isLoaded: true,
+
       skills: false,
       projects: false,
       contact: false,
       links: false,
-      showProject: false
+
+      iframe: null,
+      url: null,
     };
     this.fontSize = 14;
     this.fontWidth = this.fontSize * (2 / 3);
@@ -26,18 +29,31 @@ export default class App extends PureComponent {
     this.handleResize = this.handleResize.bind(this);
     this.handleHover = this.handleHover.bind(this);
     this.handleClick = this.handleClick.bind(this);
+
+    this.randomPop = this.randomPop.bind(this);
   };
 
   componentDidMount() {
     Object.assign(this, content);
     window.addEventListener('resize', this.handleResize);
     this.setSize();
-    setTimeout(() => this.setState(prevState => ({ loaded: true })), 3500);
+    setTimeout(() => this.setState(prevState => ({ isLoaded: true })), 3500);
+    this.randomPop();
+  };
+
+  componentDidUpdate() {
+  };
+
+  randomPop() {
+    const { grid } = this;
+    const cel = grid[Math.floor(Math.random() * grid.length)];
+    if (!cel.cl) this.letterPop(cel);
+    setTimeout(this.randomPop, 500 + (Math.random() * 2000));
   };
 
   setSize() {
     const { fontSize, fontWidth, text } = this;
-    const { loaded } = this.state;
+    const { isLoaded } = this.state;
     const { svg } = this.refs;
     const cols = Math.floor((Math.max(window.innerWidth, 550) * .95) / fontWidth);
     const rows = Math.floor((Math.max(window.innerHeight, 450) * .95) / fontSize);
@@ -49,14 +65,14 @@ export default class App extends PureComponent {
     svg.style.height = height;
     svg.setAttribute('viewbox', `0 0 ${width} ${height}`);
 
-    this.drawGrid(this.grid = emptyGrid(cols, rows, loaded));
+    this.drawGrid(this.grid = emptyGrid(cols, rows, isLoaded));
     text.forEach(d => {
-      d.delayIncr = !loaded;
+      d.delayIncr = !isLoaded;
       this.introTimeout = setTimeout(() => {
         const queue = this.populateGrid(d);
         this.undrawGrid(queue);
         this.drawGrid(queue);
-      }, loaded ? 0 : d.t);
+      }, isLoaded ? 0 : d.t);
     });
 
     this.setState(prevState => ({ cols, rows }));
@@ -93,28 +109,6 @@ export default class App extends PureComponent {
     });
   };
 
-  hideGrid(cels) {
-    cels.forEach(d => {
-      d3.select(`#${d.id}`)
-        .attr('class', 'hidden')
-        .transition()
-          .delay(d.delay / 1.5)
-          .attr('opacity', 0)
-    });
-  };
-
-  showGrid(cels) {
-    // setTimeout(() => this.setState(prevState => ({ showProject: false, hidden: undefined })), 1000)
-    this.setState(prevState => ({ showProject: false, hidden: undefined }));
-    cels.forEach(d => {
-      d3.select(`#${d.id}`)
-        .attr('class', d.cl)
-        .transition()
-          .delay(d.delay / 1.5)
-          .attr('opacity', d.cl ? 1 : .5);
-    });
-  };
-
   letterSwap(cel) {
     cel.text = randomLetter();
     d3.select(`#${cel.id}`)
@@ -125,21 +119,31 @@ export default class App extends PureComponent {
         .attr('opacity', .5);
   };
 
-  // letterSwap(cel) {
-  //   const { fontSize, fontWidth } = this;
-  //   cel.text = randomLetter();
-  //   d3.select(`#${cel.id}`)
-  //     .transition().duration(100)
-  //       .attr('x', (cel.c + .5) * fontWidth)
-  //       .attr('y', (cel.r + .5) * fontSize)
-  //       .attr('font-size', 0)
-  //       .attr('opacity', 0)
-  //     .transition().duration(250)
-  //       .attr('x', cel.c * fontWidth)
-  //       .attr('y', cel.r * fontSize)
-  //       .attr('font-size', fontSize)
-  //       .attr('opacity', .5);
-  // };
+  letterPop(cel, type) {
+    const { fontSize, fontWidth } = this;
+    cel.text = randomLetter();
+    const speed = 100 + (Math.random() * 1000);
+    const scalars = [[.5, -1.75], [0, 5]];
+    if (Math.random() < 0.5) scalars.forEach(d => d.reverse());
+    d3.select(`#${cel.id}`)
+      .transition().duration(speed)
+        .attr('x', (cel.c + scalars[0][0]) * fontWidth)
+        .attr('y', (cel.r + scalars[0][0]) * fontSize)
+        .attr('font-size', scalars[1][0] * fontSize)
+        .attr('opacity', 0)
+      .transition().duration(0)
+        .text(cel.text)
+        .attr('x', (cel.c + scalars[0][1]) * fontWidth)
+        .attr('y', (cel.r + scalars[0][1]) * fontSize)
+        .attr('font-size', scalars[1][1] * fontSize)
+      .transition().duration(speed / 2)
+        .attr('x', cel.c * fontWidth)
+        .attr('y', cel.r * fontSize)
+        .attr('font-size', fontSize)
+        .attr('opacity', .5);
+  };
+
+
 
   populateGrid(entry) {
     const { str, posX, posY, fill, cl, hover, adjC, adjR, action, delayIncr = 1 } = entry;
@@ -175,17 +179,22 @@ export default class App extends PureComponent {
   };
 
   hideSubset(key) {
-    const cels = this.grid.filter(d => d.cl === key);
-    const queue = [];
-    cels.forEach((cel, i) => {
-      let fill, cl, hover, action;
-      queue.push(Object.assign(cel, {
+    const cels = this.grid.filter(d => (key ? d.cl === key : d.cl));
+    this.replaceCels(cels);
+  };
+
+  replaceCels(cels) {
+    let fill, cl, hover, action;
+    const queue = cels.map((cel, i) => {
+      return Object.assign(cel, {
         text: randomLetter(), fill, cl, hover, action
-      }));
+      });
     });
     this.undrawGrid(queue);
     this.drawGrid(queue);
   };
+
+
 
   handleResize() {
     const { svg } = this.refs;
@@ -221,7 +230,7 @@ export default class App extends PureComponent {
         switch (cl) {
           case 'projects' :
             console.log('open project ', action);
-            this.showFrame(action);
+            this.showIframe(action);
             break;
           case 'links' :
             window.open(action, '_blank')
@@ -229,86 +238,175 @@ export default class App extends PureComponent {
           case 'contact' :
             window.location = action;
             break;
-          default : return null
+          // default : return null
+          default : console.log('default')
         };
-      };
+      } else if (this.state.iframe) {
+        this.hideIframe();
+        // console.log('exit')
+      }
     };
   };
 
-  showFrame(proj) {
-    const { rows, cols } = this.state;
-    const { fontSize, fontWidth } = this;
-    const marginY = 4;
-    const marginX = 20;
 
-    const queue = this.grid.filter(d => {
-      const x = marginX / 2;
-      const y = marginY / 2;
-      return (d.c >= x && d.c < (cols - x) && d.r >= y && d.r < (rows - y));
+  hideIframe() {
+    this.setState(prevState => ({ iframe: false }))
+    this.replaceCels(this.grid.filter(d => d.cl === 'hidden' || d.cl === 'info'));
+    this.text.forEach(d => {
+      const queue = this.populateGrid(d);
+      this.undrawGrid(queue);
+      this.drawGrid(queue);
+    });
+  };
+
+
+
+
+
+
+  showIframe(focus) {
+    const { projects, fontSize, fontWidth } = this;
+    const { name, date, tech, git, url, ratio } = projects.data[focus];
+    const { rows, cols } = this.state;
+
+    this.hideSubset();
+
+
+// clear space for iframe based on aspect
+    const celRatio = (fontSize / fontWidth);
+    const frameRows = rows - 10;
+    const frameCols = Math.ceil((frameRows * celRatio * ratio) / 2) * 2;
+    // const frameCols = Math.ceil(frameRows * celRatio * ratio);
+    const startRow = 2;
+    const startCol = Math.floor((cols - frameCols) / 2);
+    // const startCol = (cols - frameCols) / 2;
+    const clear = this.grid.filter(d =>
+      d.c >= startCol &&
+      d.c < (cols - startCol) &&
+      d.r >= startRow &&
+      d.r < (startRow + frameRows)
+    );
+    clear.forEach(d => {
+      d.cl = 'hidden';
+    });
+
+    // this.hideSubset();
+
+    this.undrawGrid(clear);
+
+
+// symmetrical around x axis
+    this.showStyle = {
+      width: (frameCols * fontWidth) + 'px',
+      height: (frameRows * fontSize) + 'px',
+      left: ((cols - frameCols) / 2) * fontWidth + 'px',
+      top: (startRow * fontSize) + 'px',
+      opacity: 1,
+      // transition: 'opacity 5s',
+      // zIndex: 2
+    };
+
+
+
+
+// add text to grid baced on project info
+    const posX = startCol / cols;
+    const posY = (startRow + frameRows) / rows;
+    const fill = '#0089FF';
+    const adjC = 5;
+    const queue = [name, date, tech].map((d, i) => (
+      { str: d, posX, posY, fill, cl: 'info', adjC, adjR: (i + 1), action: true }
+    ))
+    queue.forEach(d => {
+      const grid = this.populateGrid(d)
+      this.undrawGrid(grid);
+      this.drawGrid(grid);
     });
 
 
-    const frame = {
-      left: fontWidth * (marginX / 2) + 'px',
-      top: fontSize * (marginY / 2) + 'px',
-      width: (cols - marginX) * fontWidth + 'px',
-      height: (rows - marginY) * fontSize + 'px',
-      opacity: 1,
-    }
 
-    this.hideGrid(queue);
-    this.setState(prevState => ({ frame, showProject: proj, hidden: queue }));
+    this.setState(prevState => ({ iframe: focus, url }));
 
+// 2 line margin above iframe
+// 1 line margin below iframe
+// 4 lines info
+    // name
+    // date
+    // tech
+    // github
+// 2 line margin below info
+// 1 lone for overflow
 
-            // this.setState(prevState => ({  }));
-
-
-
-
-    // const { fontSize, fontWidth, grid } = this;
-
-    // const frameHeight = (rows * fontSize) * .8;
-    // const frameWidth = frameHeight * (16 / 9);
-
-    // const frameCols = Math.ceil(frameWidth / fontWidth);
-    // const frameRows = Math.ceil(frameHeight / fontSize);
-
-    // const startCol = (cols - frameCols) / 2;
-    // const endCol = startCol + frameCols;
-    // const startRow = (rows - frameRows) / 2;
-    // const endRow = startRow + frameRows;
-
-    // const queue = this.grid.filter(d => {
-    //   if (d.c >= startCol && d.c <= endCol && d.r >= startRow && d.r <= endRow)
-    //   return d;
-    // })
-
-    // this.undrawGrid(queue)
+// iframe height = rows - 10
 
 
-    // const height = rows - 4;
-    // const width = Math.ceil(height * (16 / 9));
-    // const marginX = cols - Math.ceil((rows - marginY) * (fontSize / fontWidth));
-
-
-
-
-    // console.log(this.grid.length, queue.length)
-
-    // console.log(frameCols, frameRows)
 
   }
 
 
+
+
+  // hideGrid(cels) {
+  //   cels.forEach(d => {
+  //     d3.select(`#${d.id}`)
+  //       // .attr('class', 'hidden')
+  //       .transition()
+  //         .delay(d.delay / 1.5)
+  //         .attr('opacity', 0)
+  //   });
+  // };
+
+
+  // showGrid(cels) {
+  //   // setTimeout(() => this.setState(prevState => ({ showProject: false, hidden: undefined })), 1000)
+  //   // this.setState(prevState => ({ showProject: false, hidden: undefined }));
+  //   cels.forEach(d => {
+  //     d3.select(`#${d.id}`)
+  //       .attr('class', d.cl)
+  //       .transition()
+  //         .delay(d.delay / 1.5)
+  //         .attr('opacity', d.cl ? 1 : .5);
+  //   });
+  // };
+
+
+
+// makeIframe(url, tag) {
+//   if (url)
+//     return <iframe ref="iframe" allow="camera;microphone" src={url} title="display" />
+//   else return null;
+// }
+
+
+
   render() {
-    const { showProject, hidden, frame } = this.state;
+    const { iframe, url } = this.state;
+    const { showStyle } = this;
     return (
       <div className="App">
         <div className="main">
           <svg ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
-          <Project proj={showProject} frame={frame} hide={() => this.showGrid(hidden)} />
+
+          <div className="iframe-container" style={iframe ? showStyle : null}>
+            {iframe &&
+              <iframe className={iframe} ref="iframe" allow="camera;microphone" src={url} title="display" scrolling="no" />
+            }
+          </div>
+
         </div>
       </div>
     );
   };
 };
+
+
+          // <button onClick={() => this.showIframe('sleepy')}>show</button>
+          // <button onClick={() => this.hideIframe()}>hide</button>
+
+
+
+
+            // {iframe && <iframe ref="iframe" src={iframe} allow="camera;microphone" title="display" />}
+
+
+          // <Project focus={showProject} frame={frame} hide={() => this.showGrid(hidden)} />
