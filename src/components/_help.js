@@ -19,5 +19,3 @@ export const emptyGrid = (cols, rows, noDelay = true) => {
   };
   return grid;
 };
-
-

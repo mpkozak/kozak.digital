@@ -114,7 +114,7 @@ content.projects = {
   },
   fill: '#0089FF',
   offsetX: 0,
-  offsetY: 2,
+  offsetY: 3,
   deltaX: .5,
   deltaY: 2
 };

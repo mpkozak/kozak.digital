@@ -17,32 +17,48 @@ text {
   /*text-shadow: 1px 1px 2px #000000;*/
 }
 
-.iframe-container {
+#iframe-container {
   position: absolute;
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
   justify-content: center;
-
-  opacity: 0;
-  transition: opacity 2s;
   overflow: hidden;
-  /*padding: -5vmin;*/
 
-  /*background-color: rgba(255, 255, 255, .1);*/
-  background-color: rgba(0, 255, 0, 1);
-  box-shadow: 0 0 2vmin 1vmin rgba(0, 0, 0, .5);
+  /*transition: opacity 2s ease-in;*/
+  opacity: 1;
 
+  /*box-shadow: 0 0 .5vmin .5vmin rgba(0, 0, 0, .5);*/
+
+  /*background-color: rgba(0, 255, 0, 1);*/
   /*border: 1px solid green;*/
+}
+
+iframe {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  transition: opacity 1s;
+  border: none;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+.drive {
+  transform: scale(1.18, 1.26);
 }
 
 
 
-iframe {
-  border: none;
-  position: relative;
-  width: 100%;
-  height: 100%;
+
+
+
+
+
+
 
 
 
@@ -58,16 +74,6 @@ iframe {
   /*z-index: 5;*/
   /*border: 2px solid blue;*/
   /*opacity: .5;*/
-}
-
-.drive {
-  transform: scale(1.225);
-  /*width: 150%;*/
-  /*height: 150%;*/
-
-}
-
-
 
 
 /*

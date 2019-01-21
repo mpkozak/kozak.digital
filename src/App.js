@@ -10,8 +10,9 @@ export default class App extends PureComponent {
     this.state = {
       rows: undefined,
       cols: undefined,
-      // isLoaded: false,
-      isLoaded: true,
+      // celRatio: undefined,
+      isLoaded: false,
+      // isLoaded: true,
 
       skills: false,
       projects: false,
@@ -24,6 +25,12 @@ export default class App extends PureComponent {
     this.fontSize = 14;
     this.fontWidth = this.fontSize * (2 / 3);
     this.grid = [];
+    this.iframeStyle = {};
+    // this.inc = 0;
+
+    this.celRatio = (2 / 3);
+    this.celHeight = 14;
+    this.celWidth = this.celHeight * this.celRatio;
 
     this.setSize = this.setSize.bind(this);
     this.handleResize = this.handleResize.bind(this);
@@ -38,17 +45,11 @@ export default class App extends PureComponent {
     window.addEventListener('resize', this.handleResize);
     this.setSize();
     setTimeout(() => this.setState(prevState => ({ isLoaded: true })), 3500);
-    this.randomPop();
+    // this.randomPop();
   };
 
   componentDidUpdate() {
-  };
-
-  randomPop() {
-    const { grid } = this;
-    const cel = grid[Math.floor(Math.random() * grid.length)];
-    if (!cel.cl) this.letterPop(cel);
-    setTimeout(this.randomPop, 500 + (Math.random() * 2000));
+    // this.showSubset('projects')
   };
 
   setSize() {
@@ -59,6 +60,7 @@ export default class App extends PureComponent {
     const rows = Math.floor((Math.max(window.innerHeight, 450) * .95) / fontSize);
     const width = cols * fontWidth;
     const height = rows * fontSize;
+    const celRatio = (fontSize / fontWidth);
 
     d3.selectAll('text').remove();
     svg.style.width = width;
@@ -75,7 +77,7 @@ export default class App extends PureComponent {
       }, isLoaded ? 0 : d.t);
     });
 
-    this.setState(prevState => ({ cols, rows }));
+    this.setState(prevState => ({ cols, rows, celRatio }));
   };
 
   drawGrid(cels) {
@@ -92,8 +94,24 @@ export default class App extends PureComponent {
         .attr('text-anchor', 'start')
         .attr('alignment-baseline', 'hanging')
         .attr('opacity', 0)
+        .on('mouseover', d => this.handleHover(d.id))
       .transition().delay(d => d.delay)
         .attr('opacity', d => d.cl ? 1 : .5);
+
+    // d3.select(this.refs.svg).selectAll('g')
+    //   .data(cels).enter().append('rect')
+    //     .attr('id', d => d.id)
+    //     .attr('class', d => d.cl ? d.cl : undefined)
+    //     .attr('x', d => d.c * fontWidth)
+    //     .attr('y', d => d.r * fontSize)
+    //     .attr('width', fontWidth)
+    //     .attr('height', fontSize)
+    //     .attr('fill', d => d.fill ? d.fill : '#999999')
+    //     .attr('stroke', 'white')
+    //     .attr('stroke-width', '.1px')
+    //     .attr('opacity', 0)
+    //   .transition().delay(d => d.delay)
+    //     .attr('opacity', d => d.cl ? 1 : .5);
   };
 
   undrawGrid(cels) {
@@ -109,6 +127,17 @@ export default class App extends PureComponent {
     });
   };
 
+  replaceCels(cels) {
+    let fill, cl, hover, action;
+    const queue = cels.map((cel, i) => {
+      return Object.assign(cel, {
+        text: randomLetter(), fill, cl, hover, action
+      });
+    });
+    this.undrawGrid(queue);
+    this.drawGrid(queue);
+  };
+
   letterSwap(cel) {
     cel.text = randomLetter();
     d3.select(`#${cel.id}`)
@@ -118,32 +147,6 @@ export default class App extends PureComponent {
         .text(cel.text)
         .attr('opacity', .5);
   };
-
-  letterPop(cel, type) {
-    const { fontSize, fontWidth } = this;
-    cel.text = randomLetter();
-    const speed = 100 + (Math.random() * 1000);
-    const scalars = [[.5, -1.75], [0, 5]];
-    if (Math.random() < 0.5) scalars.forEach(d => d.reverse());
-    d3.select(`#${cel.id}`)
-      .transition().duration(speed)
-        .attr('x', (cel.c + scalars[0][0]) * fontWidth)
-        .attr('y', (cel.r + scalars[0][0]) * fontSize)
-        .attr('font-size', scalars[1][0] * fontSize)
-        .attr('opacity', 0)
-      .transition().duration(0)
-        .text(cel.text)
-        .attr('x', (cel.c + scalars[0][1]) * fontWidth)
-        .attr('y', (cel.r + scalars[0][1]) * fontSize)
-        .attr('font-size', scalars[1][1] * fontSize)
-      .transition().duration(speed / 2)
-        .attr('x', cel.c * fontWidth)
-        .attr('y', cel.r * fontSize)
-        .attr('font-size', fontSize)
-        .attr('opacity', .5);
-  };
-
-
 
   populateGrid(entry) {
     const { str, posX, posY, fill, cl, hover, adjC, adjR, action, delayIncr = 1 } = entry;
@@ -183,17 +186,62 @@ export default class App extends PureComponent {
     this.replaceCels(cels);
   };
 
-  replaceCels(cels) {
-    let fill, cl, hover, action;
-    const queue = cels.map((cel, i) => {
-      return Object.assign(cel, {
-        text: randomLetter(), fill, cl, hover, action
-      });
-    });
-    this.undrawGrid(queue);
-    this.drawGrid(queue);
+
+
+
+
+  randomPop() {
+    const { grid } = this;
+    const cel = grid[Math.floor(Math.random() * grid.length)];
+    if (!cel.cl) this.letterPop(cel);
+    // setTimeout(this.randomPop, 500 + (Math.random() * 2000));
   };
 
+  letterPop(cel, type) {
+    const { fontSize, fontWidth } = this;
+    cel.text = randomLetter();
+    const speed = 1000;
+    const scalars = [[.5, 0], [-1.75, 5]];
+    if (Math.random() < 0.5) scalars.reverse();
+    d3.select(`#${cel.id}`)
+      .transition().ease(d3.easeCircle).duration(speed)
+        .attr('x', (cel.c + scalars[0][0]) * fontWidth)
+        .attr('y', (cel.r + scalars[0][0]) * fontSize)
+        .attr('font-size', scalars[0][1] * fontSize)
+        .attr('opacity', 0)
+      .transition().duration(100)
+        .attr('x', (cel.c + scalars[1][0]) * fontWidth)
+        .attr('y', (cel.r + scalars[1][0]) * fontSize)
+        .attr('font-size', scalars[1][1] * fontSize)
+        .text(cel.text)
+      .transition().ease(d3.easeElastic).duration(speed)
+        .attr('x', cel.c * fontWidth)
+        .attr('y', cel.r * fontSize)
+        .attr('font-size', fontSize)
+        .attr('opacity', .5);
+
+    // d3.select(`#${cel.id}`)
+    //   .transition().ease(d3.easeExp).duration(speed / 2)
+    //     .attr('opacity', 1)
+    //   .transition().ease(d3.easeCircle).duration(speed)
+    //     .attr('x', (cel.c + scalars[0][0]) * fontWidth)
+    //     .attr('y', (cel.r + scalars[0][0]) * fontSize)
+    //     .attr('width', scalars[0][1] * fontWidth)
+    //     .attr('height', scalars[0][1] * fontSize)
+    //     .attr('opacity', 0)
+    //   .transition().duration(0)
+    //     .text(cel.text)
+    //     .attr('x', (cel.c + scalars[1][0]) * fontWidth)
+    //     .attr('y', (cel.r + scalars[1][0]) * fontSize)
+    //     .attr('width', scalars[1][1] * fontWidth)
+    //     .attr('height', scalars[1][1] * fontSize)
+    //   .transition().ease(d3.easeElastic).duration(speed / 2)
+    //     .attr('x', cel.c * fontWidth)
+    //     .attr('y', cel.r * fontSize)
+    //     .attr('width', fontWidth)
+    //     .attr('height', fontSize)
+    //     .attr('opacity', .5);
+  };
 
 
   handleResize() {
@@ -205,9 +253,18 @@ export default class App extends PureComponent {
     this.hoverTimeout = setTimeout(this.setSize, 500);
   };
 
-  handleHover(e) {
+  handleHover(id) {
     // const cel = this.grid.find(d => d.id === e.target.id);
-    const cel = this.grid[e.target.id.substring(3)];
+
+    // const { inc } = this;
+    console.log(this.inc)
+    if (this.inc++ > 20) {
+      this.randomPop();
+      this.inc = 0;
+    }
+
+    // const cel = this.grid[e.target.id.substring(3)];
+    const cel = this.grid[id.substring(3)];
     if (cel) {
       const { cl, hover } = cel;
       if (!cl) this.letterSwap(cel);
@@ -217,7 +274,7 @@ export default class App extends PureComponent {
           if (this.state[hover]) this.hideSubset(hover);
           else this.showSubset(hover);
           this.setState(prevState => ({ [hover]: !prevState[hover] }));
-        }, 250);
+        }, 150);
       };
     };
   };
@@ -250,7 +307,7 @@ export default class App extends PureComponent {
 
 
   hideIframe() {
-    this.setState(prevState => ({ iframe: false }))
+    this.setState(prevState => ({ iframe: false, url: '#' }))
     this.replaceCels(this.grid.filter(d => d.cl === 'hidden' || d.cl === 'info'));
     this.text.forEach(d => {
       const queue = this.populateGrid(d);
@@ -259,139 +316,81 @@ export default class App extends PureComponent {
     });
   };
 
+  setIframeDimensions(ratio) {
+    const { rows, cols, celRatio } = this.state;
+    const { fontSize, fontWidth } = this;
 
-
-
+    let height = rows - 5;
+    let width = Math.round(height * ratio * celRatio);
+    if (width > (cols - 20)) {
+      width = Math.round(cols * .8);
+      height = Math.round((width / celRatio) / ratio);
+    };
+    const startCol = Math.floor((cols - width) / 2);
+    const startRow = Math.floor((rows - height) / 2);
+    width = cols - (startCol * 2);
+    this.iframeStyle = {
+      width: ((width - .5) * fontWidth)  + 'px',
+      height: ((height - .2) * fontSize) + 'px',
+      left: ((startCol + .25) * fontWidth) + 'px',
+      top: ((startRow + .1) * fontSize) + 'px',
+    };
+    return { width, height, startCol, startRow };
+  };
 
 
   showIframe(focus) {
-    const { projects, fontSize, fontWidth } = this;
-    const { name, date, tech, git, url, ratio } = projects.data[focus];
-    const { rows, cols } = this.state;
-
+    // const { projects, fontSize, fontWidth } = this;
+    const { name, date, tech, git, url, ratio } = this.projects.data[focus];
+    const { width, height, startCol, startRow } = this.setIframeDimensions(ratio);
     this.hideSubset();
-
-
-// clear space for iframe based on aspect
-    const celRatio = (fontSize / fontWidth);
-    const frameRows = rows - 10;
-    const frameCols = Math.ceil((frameRows * celRatio * ratio) / 2) * 2;
-    // const frameCols = Math.ceil(frameRows * celRatio * ratio);
-    const startRow = 2;
-    const startCol = Math.floor((cols - frameCols) / 2);
-    // const startCol = (cols - frameCols) / 2;
     const clear = this.grid.filter(d =>
       d.c >= startCol &&
-      d.c < (cols - startCol) &&
+      d.c < (startCol + width) &&
       d.r >= startRow &&
-      d.r < (startRow + frameRows)
+      d.r < (startRow + height)
     );
     clear.forEach(d => {
       d.cl = 'hidden';
     });
-
-    // this.hideSubset();
-
     this.undrawGrid(clear);
 
 
-// symmetrical around x axis
-    this.showStyle = {
-      width: (frameCols * fontWidth) + 'px',
-      height: (frameRows * fontSize) + 'px',
-      left: ((cols - frameCols) / 2) * fontWidth + 'px',
-      top: (startRow * fontSize) + 'px',
-      opacity: 1,
-      // transition: 'opacity 5s',
-      // zIndex: 2
-    };
 
-
-
+    // this.setState(prevState => ({ iframe: focus, url }));
 
 // add text to grid baced on project info
-    const posX = startCol / cols;
-    const posY = (startRow + frameRows) / rows;
-    const fill = '#0089FF';
-    const adjC = 5;
-    const queue = [name, date, tech].map((d, i) => (
-      { str: d, posX, posY, fill, cl: 'info', adjC, adjR: (i + 1), action: true }
-    ))
-    queue.forEach(d => {
-      const grid = this.populateGrid(d)
-      this.undrawGrid(grid);
-      this.drawGrid(grid);
-    });
-
-
-
-    this.setState(prevState => ({ iframe: focus, url }));
-
-// 2 line margin above iframe
-// 1 line margin below iframe
-// 4 lines info
-    // name
-    // date
-    // tech
-    // github
-// 2 line margin below info
-// 1 lone for overflow
-
-// iframe height = rows - 10
+    // const posX = startCol / cols;
+    // const posY = (startRow + frameRows) / rows;
+    // const fill = '#0089FF';
+    // const adjC = 5;
+    // const queue = [name, date, tech].map((d, i) => (
+    //   { str: d, posX, posY, fill, cl: 'info', adjC, adjR: (i + 1), action: true }
+    // ))
+    // queue.forEach(d => {
+    //   const grid = this.populateGrid(d)
+    //   this.undrawGrid(grid);
+    //   this.drawGrid(grid);
+    // });
 
 
 
   }
 
 
-
-
-  // hideGrid(cels) {
-  //   cels.forEach(d => {
-  //     d3.select(`#${d.id}`)
-  //       // .attr('class', 'hidden')
-  //       .transition()
-  //         .delay(d.delay / 1.5)
-  //         .attr('opacity', 0)
-  //   });
-  // };
-
-
-  // showGrid(cels) {
-  //   // setTimeout(() => this.setState(prevState => ({ showProject: false, hidden: undefined })), 1000)
-  //   // this.setState(prevState => ({ showProject: false, hidden: undefined }));
-  //   cels.forEach(d => {
-  //     d3.select(`#${d.id}`)
-  //       .attr('class', d.cl)
-  //       .transition()
-  //         .delay(d.delay / 1.5)
-  //         .attr('opacity', d.cl ? 1 : .5);
-  //   });
-  // };
-
-
-
-// makeIframe(url, tag) {
-//   if (url)
-//     return <iframe ref="iframe" allow="camera;microphone" src={url} title="display" />
-//   else return null;
-// }
-
-
-
   render() {
     const { iframe, url } = this.state;
-    const { showStyle } = this;
+    const { iframeStyle } = this;
     return (
       <div className="App">
         <div className="main">
-          <svg ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
+          <svg ref="svg" onClick={this.handleClick} />
 
-          <div className="iframe-container" style={iframe ? showStyle : null}>
-            {iframe &&
-              <iframe className={iframe} ref="iframe" allow="camera;microphone" src={url} title="display" scrolling="no" />
-            }
+
+          <div id={'iframe-container'} className={iframe ? 'active' : 'hidden'} style={iframeStyle}>
+            <iframe className={iframe ? iframe : 'hidden'} ref="iframe" allow="camera;microphone" src={url} title="display" scrolling="no" />
           </div>
+
 
         </div>
       </div>
@@ -399,6 +398,13 @@ export default class App extends PureComponent {
   };
 };
 
+          // <svg ref="svg" onMouseOver={this.handleHover} onClick={this.handleClick} />
+
+
+
+
+            // {iframe &&
+            // }
 
           // <button onClick={() => this.showIframe('sleepy')}>show</button>
           // <button onClick={() => this.hideIframe()}>hide</button>
