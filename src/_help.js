@@ -24,3 +24,19 @@ export const emptyGrid = (cols, rows, delay = 100) => {
   };
   return grid;
 };
+
+
+// //white
+// '#FFFFFF'
+// //red
+// '#CB3030'
+// //orange
+// '#FDA50F'
+// //green
+// '#20BB20'
+// //blue
+// '#0089FF'
+// //purple
+// '#8E00FF'
+// //aqua
+// '#20A0A1'
