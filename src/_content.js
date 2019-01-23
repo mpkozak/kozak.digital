@@ -16,14 +16,6 @@ content.text = [
     fill: '#CB3030'
   },
   {
-    str: 'skills',
-    posX: .7,
-    posY: .4,
-    t: 2500,
-    fill: '#FDA50F',
-    hover: 'skills'
-  },
-  {
     str: 'projects',
     posX: .22,
     posY: .18,
@@ -32,12 +24,12 @@ content.text = [
     hover: 'projects'
   },
   {
-    str: 'contact',
-    posX: .85,
-    posY: .75,
-    t: 3000,
+    str: 'skills',
+    posX: .7,
+    posY: .4,
+    t: 2500,
     fill: '#FDA50F',
-    hover: 'contact'
+    hover: 'skills'
   },
   {
     str: 'links',
@@ -46,28 +38,16 @@ content.text = [
     t: 3250,
     fill: '#FDA50F',
     hover: 'links'
+  },
+  {
+    str: 'contact',
+    posX: .85,
+    posY: .75,
+    t: 3000,
+    fill: '#FDA50F',
+    hover: 'contact'
   }
 ];
-
-content.skills = {
-  display: [
-    { str: 'css' },
-    { str: 'html' },
-    { str: 'bash' },
-    { str: 'sql' },
-    { str: 'express' },
-    { str: 'node' },
-    { str: 'webaudio api' },
-    { str: 'd3+svg' },
-    { str: 'react' },
-    { str: 'javascript' }
-  ],
-  fill: '#20BB20',
-  offsetX: 1,
-  offsetY: -2,
-  deltaX: .3,
-  deltaY: -1
-};
 
 content.projects = {
   display: [
@@ -87,27 +67,26 @@ content.projects = {
   data: {
     drive: {
       name: 'drive my car',
-      date: 'september 2018',
-      tech: 'javascript (vanilla), html, css',
+      date: 'sep 2018',
+      tech: ['javascript', 'html', 'css'],
       git: 'https://github.com/mpkozak/drive/',
-      // url: 'https://kozak.digital/_drivebeta/',
-      url: 'https://kozak-drive.surge.sh/',
+      url: 'https://kozak.digital/drive',
       ratio: (16 / 9)
     },
     sleepy: {
       name: 'sleepy',
-      date: 'october 2018',
-      tech: 'react, d3, sql, node, express',
+      date: 'oct 2018',
+      tech: ['react', 'd3', 'sql', 'node', 'express'],
       git: '#',
-      url: 'https://sleepy-kozak.herokuapp.com/',
+      url: 'https://kozak.digital/sleepy',
       ratio: (9 / 16)
     },
     adex: {
       name: 'αdex',
-      date: 'december 2018',
-      tech: 'webaudio api, react, d3',
+      date: 'dec 2018',
+      tech: ['webaudio api', 'react', 'd3'],
       git: 'https://github.com/mpkozak/a.dex/',
-      url: 'https://kozak-adex.surge.sh/',
+      url: 'https://kozak.digital/adex',
       ratio: (17 / 15)
     },
   },
@@ -118,18 +97,24 @@ content.projects = {
   deltaY: 2
 };
 
-content.contact = {
+content.skills = {
   display: [
-    {
-      str: 'mparkerkozak@gmail.com',
-      action: 'mailto:mparkerkozak@gmail.com'
-    }
+    { str: 'css' },
+    { str: 'html' },
+    { str: 'bash' },
+    { str: 'sql' },
+    { str: 'express' },
+    { str: 'node' },
+    { str: 'webaudio api' },
+    { str: 'd3+svg' },
+    { str: 'react' },
+    { str: 'javascript' }
   ],
-  fill: '#20A0A1',
-  offsetX: -15,
-  offsetY: 2,
-  deltaX: 0,
-  deltaY: 1
+  fill: '#20BB20',
+  offsetX: 1,
+  offsetY: -2,
+  deltaX: .3,
+  deltaY: -1
 };
 
 content.links = {
@@ -161,6 +146,21 @@ content.links = {
   deltaX: .75,
   deltaY: -2
 };
+
+content.contact = {
+  display: [
+    {
+      str: 'mparkerkozak@gmail.com',
+      action: 'mailto:mparkerkozak@gmail.com'
+    }
+  ],
+  fill: '#20A0A1',
+  offsetX: -16,
+  offsetY: 2,
+  deltaX: 0,
+  deltaY: 1
+};
+
 
 content.text.forEach(d => {
   d.cl = 'static';

@@ -1,8 +1,8 @@
 .App {
   width: 100vw;
   height: 100vh;
-  min-width: 585px;
-  min-height: 480px;
+  /*min-width: 585px;*/
+  /*min-height: 480px;*/
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
@@ -23,12 +23,6 @@
   overflow: hidden;
   border-radius: .75vmin;
   transition: opacity 2s;
-  /*transition: transform 2s;*/
-
-  /*transition: opacity 2s ease-out;*/
-  /*background-color: rgba(0, 0, 0, .5);*/
-  /*background-color: green;*/
-  /*box-shadow: 0 0 1vmin .5vmin rgba(0, 0, 0, .3);*/
 }
 
 iframe {
@@ -59,26 +53,50 @@ iframe {
   transform: scale(1.04);
 }
 
-@media screen and (max-width: 700px) {
-  #adex {
-    width: 125%;
-    height: 125%;
-    transform: scale(.8);
-  }
+
+
+
+
+
+
+
+#button-box {
+  position: absolute;
+  /*display: flex;*/
+  /*flex-flow: column nowrap;*/
+  /*align-items: center;*/
+  /*justify-content: center;*/
+  /*overflow: hidden;*/
+  /*border-radius: .75vmin;*/
+  /*opacity:*/
+  z-index: 20;
+  /*transition: opacity 2s;*/
 }
 
-@media screen and (max-height: 570px) {
-  #adex {
-    width: 125%;
-    height: 125%;
-    transform: scale(.8);
-  }
+
+button {
+  position: absolute;
+  top: -2vmin;
+  width: 6vmin;
+  height: 6vmin;
+  border-radius: 3vmin;
+  z-index: 20;
+  font-family: helvetica;
+  font-weight: 400;
+  font-size: 4vmin;
+  color: #FFFFFF;
+  border: 1px solid #CCCCCC;
+  background-color: #333333;
+  opacity: .8;
 }
 
+#iframe-exit {
+  left: -2vmin;
+}
 
-
-
-
+#iframe-link {
+  right: -2vmin;
+}
 
 
 
@@ -144,7 +162,6 @@ iframe {
   background-color: #333333;
   opacity: .8;
 }
-
 
 .project > .iframe-exit {
   left: -2vmin;
