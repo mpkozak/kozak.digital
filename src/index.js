@@ -4,7 +4,6 @@ import './index.css';
 import App from './App';
 import AppMobile from './AppMobile';
 
-const minWidth = 585;
 const minWidth = 540;
 const minHeight = 480;
 
