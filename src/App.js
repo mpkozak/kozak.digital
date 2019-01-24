@@ -39,16 +39,15 @@ export default class App extends PureComponent {
     const { celHeight, celWidth, text } = this;
     const { minWidth, minHeight } = this.props;
     const { isLoaded } = this.state;
-    const { svg } = this.refs;
+    const { grid } = this.refs;
     const cols = Math.floor((Math.max(window.innerWidth, minWidth) * .95) / celWidth);
     const rows = Math.floor((Math.max(window.innerHeight, minHeight) * .95) / celHeight);
     const width = cols * celWidth;
     const height = rows * celHeight;
 
     d3.selectAll('text').remove();
-    svg.style.width = width;
-    svg.style.height = height;
-    svg.setAttribute('viewbox', `0 0 ${width} ${height}`);
+    grid.style.width = width + 'px';
+    grid.style.height = height + 'px';
 
     this.drawGrid(this.grid = emptyGrid(cols, rows, isLoaded ? 250 : 500));
     text.forEach(d => {
@@ -65,26 +64,29 @@ export default class App extends PureComponent {
 
   drawGrid(cels) {
     const { celHeight, celWidth } = this;
-    d3.select(this.refs.svg).selectAll('g')
+    d3.select(this.refs.grid).selectAll('g')
       .data(cels).enter().append('text')
         .text(d => d.text)
         .attr('id', d => d.id)
         .attr('class', d => d.cl ? d.cl : null)
-        .attr('x', d => d.c * celWidth)
-        .attr('y', d => d.r * celHeight)
-        .attr('font-size', celHeight)
-        .attr('fill', d => d.fill ? d.fill : '#999999')
-        .attr('text-anchor', 'start')
-        .attr('alignment-baseline', 'hanging')
-        .attr('opacity', 0)
+        .style('position', 'absolute')
+        .style('width', celWidth + 'px')
+        .style('height', celHeight + 'px')
+        .style('left', d => d.c * celWidth + 'px')
+        .style('top', d => d.r * celHeight + 'px')
+        .style('background-color', 'rgba(0, 0, 0, 0)')
+        .style('color', d => d.fill ? d.fill : '#999999')
+        .style('font-size', celHeight + 'px')
+        .style('text-align', 'center')
+        .style('opacity', 0)
         .on('mouseover', this.handleHover)
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
-        .attr('opacity', d => d.cl ? 1 : .5);
+        .style('opacity', d => d.cl ? 1 : .5);
   };
 
   undrawGrid(cels) {
-    d3.selectAll('.delete').remove();
+    // d3.selectAll('.delete').remove();
     cels.forEach(d => {
       d3.select(`#${d.id}`)
         .attr('class', 'delete')
@@ -93,7 +95,7 @@ export default class App extends PureComponent {
         .on('click', null)
         .transition()
           .delay(d.delay / 1.5)
-          .attr('opacity', 0)
+          .style('opacity', 0)
           .remove();
     });
   };
@@ -113,10 +115,10 @@ export default class App extends PureComponent {
     cel.text = randomLetter();
     d3.select(`#${cel.id}`)
       .transition()
-        .attr('opacity', 0)
+        .style('opacity', 0)
       .transition()
         .text(cel.text)
-        .attr('opacity', .5);
+        .style('opacity', .5);
   };
 
   populateGrid({ str, posX, posY, fill, cl, hover, adjC, adjR, action, delayIncr = 1 }) {
@@ -168,12 +170,19 @@ export default class App extends PureComponent {
     };
     const startCol = Math.floor((cols - width) / 2);
     const startRow = Math.max(Math.floor((rows - height) / 3), 2);
+
     this.iframeStyle = {
-      width: ((width - .5) * celWidth)  + 'px',
-      height: ((height - .2) * celHeight) + 'px',
-      left: ((startCol + .25) * celWidth) + 'px',
-      top: ((startRow + .1) * celHeight) + 'px',
+      width: (width * celWidth)  + 'px',
+      height: (height * celHeight) + 'px',
+      left: (startCol * celWidth) + 'px',
+      top: (startRow * celHeight) + 'px',
     };
+    // const { container } = this.refs;
+    // container.style.width = (width * celWidth);
+    // container.style.height = (height * celHeight);
+    // container.style.left = (startCol * celWidth);
+    // container.style.top = (startRow * celHeight);
+
     return { width, height, startCol, startRow };
   };
 
@@ -190,13 +199,13 @@ export default class App extends PureComponent {
     this.url = this.projects.data[focus].url;
     const { width, height, startCol, startRow } = this.setIframeDimensions(focus);
     this.setState(prevState => ({ focus }));
+    this.hideSubset();
     const clear = this.grid.filter(d =>
       d.c >= startCol &&
       d.c < (startCol + width) &&
       d.r >= startRow &&
       d.r < (startRow + height)
     );
-    this.hideSubset();
     clear.forEach(d => {
       d.cl = 'hidden';
       d.delay = 1500 * Math.random();
@@ -284,8 +293,8 @@ export default class App extends PureComponent {
     return (
       <div className="App" style={style}>
         <div className="main">
-          <svg ref="svg" />
-          <div id={'iframe-container'} className={toggleHide} style={iframeStyle}>
+          <div ref="grid" className="grid" />
+          <div ref="container" id={'iframe-container'} className={toggleHide} style={iframeStyle}>
             <iframe
               id={focus || null}
               className={toggleHide}
