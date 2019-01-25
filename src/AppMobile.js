@@ -22,7 +22,6 @@ export default class AppMobile extends PureComponent {
     this.celWidth = this.celHeight * this.celRatio;
     this.grid = [];
     this.makeGrid = this.makeGrid.bind(this);
-
     this.handleRotate = this.handleRotate.bind(this);
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -30,18 +29,20 @@ export default class AppMobile extends PureComponent {
 
   componentDidMount() {
     Object.assign(this, content);
-    this.configureCels();
-    this.configureText();
-    this.makeGrid();
+    const horizontal = this.configureCels();
+    this.configureText(horizontal);
+    this.makeGrid(horizontal);
     this.refs.grid.addEventListener('touchmove', this.handleTouchMove);
     window.addEventListener('resize', this.handleRotate);
   };
 
   configureCels() {
-    const w = (window.innerWidth / 31);
-    const h = (window.innerHeight / 30);
+    const { innerWidth, innerHeight } = window;
+    const horizontal = innerWidth > innerHeight;
+    const w = (innerWidth / (horizontal ? 50 : 31));
+    const h = (innerHeight / (horizontal ? 21 : 30));
     if (w < this.celWidth || h < this.celHeight) {
-      if (w < h) {
+      if (w < h * this.celRatio) {
         this.celWidth = w;
         this.celHeight = w / this.celRatio;
       } else {
@@ -49,11 +50,21 @@ export default class AppMobile extends PureComponent {
         this.celHeight = h;
       };
     };
+    return horizontal;
   };
 
-  configureText() {
-    const { projects, skills, links, contact } = this;
-    if (window.innerWidth < window.innerHeight) {
+  configureText(horizontal) {
+    const { text, projects, skills, links, contact } = this;
+    if (!horizontal) {
+      text[0].posY = .5;
+      text[1].posY = .6;
+      text[2].posX = .22;
+      text[2].posY = .18;
+      text[3].posX = .7;
+      text[3].posY = .4;
+      text[4].posX = .15;
+      text[5].posX = .85;
+      text[5].posY = .75;
       projects.offsetX = 3;
       projects.offsetY = 3;
       projects.deltaX = 1;
@@ -65,29 +76,39 @@ export default class AppMobile extends PureComponent {
       contact.offsetX = -5;
       contact.offsetY = 3;
     } else {
-      projects.offsetX = 5;
-      projects.offsetY = 3;
+      text[0].posY = .75;
+      text[1].posY = .85;
+      text[2].posX = .15;
+      text[2].posY = .14;
+      text[3].posX = .45;
+      text[3].posY = .58;
+      text[4].posX = .24;
+      text[5].posX = .82;
+      text[5].posY = .35;
+      projects.offsetX = 6;
+      projects.offsetY = 2;
       projects.deltaX = 1;
-      skills.offsetX = -3;
-      skills.deltaX = .8;
-      links.offsetX = 6;
-      links.deltaX = 1.4;
+      skills.offsetX = -2;
+      skills.deltaX = 1.2;
+      links.offsetX = -3;
+      links.deltaX = -1;
       contact.display[0].str = 'mparkerkozak@gmail.com';
-      contact.offsetX = -10;
+      contact.offsetX = -2;
       contact.offsetY = 3;
     };
+    content.inheritPosition();
   };
 
-  makeGrid() {
+  makeGrid(horizontal) {
     const { innerWidth, innerHeight } = window;
     const { celHeight, celWidth, text } = this;
     const { isLoaded } = this.state;
     const { grid } = this.refs;
-    const horizontal = innerWidth > innerHeight;
     const cols = Math.floor(innerWidth / celWidth);
     const rows = Math.floor(innerHeight / celHeight);
     const width = cols * celWidth;
     const height = rows * celHeight;
+    console.log('make grid', cols, rows)
 
     d3.selectAll('text').remove();
     grid.style.width = width + 'px';
@@ -215,18 +236,13 @@ export default class AppMobile extends PureComponent {
   };
 
   handleRotate() {
-    // Object.assign(this, content);
     clearTimeout(this.introTimeout);
     this.undrawGrid(this.grid);
     this.celHeight = 18;
     this.celWidth = this.celHeight * this.celRatio;
-    // this.projects = {};
-    // this.skills = {};
-    // this.links = {};
-    // this.contact = {};
-    this.configureCels();
-    this.configureText();
-    this.makeGrid();
+    const horizontal = this.configureCels();
+    this.configureText(horizontal);
+    this.makeGrid(horizontal);
   };
 
   handleTouchMove(e) {

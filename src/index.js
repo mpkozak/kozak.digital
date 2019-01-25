@@ -9,8 +9,8 @@ const minHeight = 480;
 
 const isMobile = () => {
   if (
-    window.innerWidth < minWidth ||
-    window.innerHeight < minHeight ||
+    // window.innerWidth < minWidth ||
+    // window.innerHeight < minHeight ||
     navigator.userAgent.match(/Android/i) ||
     navigator.userAgent.match(/webOS/i) ||
     navigator.userAgent.match(/iPhone/i) ||
