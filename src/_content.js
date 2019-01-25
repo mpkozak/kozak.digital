@@ -161,14 +161,18 @@ content.contact = {
   deltaY: 1
 };
 
+content.inheritPosition = () => {
+  content.text.forEach(d => {
+    d.cl = 'static';
+    if (d.hover) {
+      const { posX, posY } = d;
+      Object.assign(content[d.hover], { posX, posY });
+    };
+  });
+};
 
-content.text.forEach(d => {
-  d.cl = 'static';
-  if (d.hover) {
-    const { posX, posY } = d;
-    Object.assign(content[d.hover], { posX, posY });
-  };
-});
+
+content.inheritPosition();
 
 
 module.exports = content;
