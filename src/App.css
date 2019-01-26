@@ -10,11 +10,36 @@
 
 #main {
   position: relative;
+  cursor: default;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .static {
-  /*-webkit-touch-callout: none;*/
-  user-select: none;
+  /*cursor: crosshair;*/
+  /*cursor: all-scroll;*/
+  /*cursor: move;*/
+  /*cursor: cell;*/
+}
+
+.projects {
+  cursor: zoom-in;
+}
+
+.links, .info {
+  cursor: pointer;
+}
+
+.contact {
+  cursor: text;
+  -webkit-touch-callout: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.esc {
+  cursor: zoom-out;
 }
 
 #container {

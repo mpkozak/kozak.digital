@@ -3,49 +3,55 @@ const content = {};
 content.text = [
   {
     str: 'this is not a website',
+    fill: '#FFFFFF',
+    cl: 'fixed',
     posX: .5,
     posY: .5,
     t: 1000,
-    fill: '#FFFFFF'
   },
   {
     str: 'm. parker kozak',
+    fill: '#CB3030',
+    cl: 'fixed',
     posX: .75,
     posY: .6,
     t: 2000,
-    fill: '#CB3030'
   },
   {
     str: 'projects',
+    fill: '#FDA50F',
+    cl: 'static',
+    hover: 'projects',
     posX: .22,
     posY: .18,
     t: 2750,
-    fill: '#FDA50F',
-    hover: 'projects'
   },
   {
     str: 'skills',
+    fill: '#FDA50F',
+    cl: 'static',
+    hover: 'skills',
     posX: .7,
     posY: .4,
     t: 2500,
-    fill: '#FDA50F',
-    hover: 'skills'
   },
   {
     str: 'links',
+    fill: '#FDA50F',
+    cl: 'static',
+    hover: 'links',
     posX: .15,
     posY: .9,
     t: 3250,
-    fill: '#FDA50F',
-    hover: 'links'
   },
   {
     str: 'contact',
+    fill: '#FDA50F',
+    cl: 'static',
+    hover: 'contact',
     posX: .85,
     posY: .75,
     t: 3000,
-    fill: '#FDA50F',
-    hover: 'contact'
   }
 ];
 
@@ -163,7 +169,7 @@ content.contact = {
 
 content.inheritPosition = () => {
   content.text.forEach(d => {
-    d.cl = 'static';
+    // d.cl = 'static';
     if (d.hover) {
       const { posX, posY } = d;
       Object.assign(content[d.hover], { posX, posY });

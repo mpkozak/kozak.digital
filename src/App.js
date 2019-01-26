@@ -34,6 +34,13 @@ export default class AppMobile extends PureComponent {
   };
 
   componentDidMount() {
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (e.target.classList[0] === 'contact') console.log(e)
+    })
+
+
+
     Object.assign(this, content);
     if (this.state.isMobile) {
       this.layoutRefreshMobile();
@@ -199,7 +206,7 @@ export default class AppMobile extends PureComponent {
         .style('font-size', celHeight + 'px')
         .style('text-align', 'center')
         .style('opacity', 0)
-        .on('mouseover', !this.state.isMobile ? this.handleHover : null)
+        .on('mouseenter', !this.state.isMobile ? this.handleHover : null)
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
         .style('opacity', d => d.cl ? 1 : .5);
@@ -486,7 +493,7 @@ export default class AppMobile extends PureComponent {
     return (
       <div id="App" style={appStyle}>
         <div id="main" style={mainStyle}>
-          <div ref="grid" className={isMobile ? 'static' : null} style={gridStyle} />
+          <div ref="grid" className={iframeFocus && 'esc'} style={gridStyle} />
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
               <iframe
