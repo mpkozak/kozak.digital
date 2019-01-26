@@ -45,13 +45,6 @@ export default class AppMobile extends PureComponent {
     };
   };
 
-  // componentDidUpdate() {
-  //   console.log(this.state.cols, this.state.rows)
-  //   const container = document.getElementById('container')
-  //   const iframe = document.getElementById('iframe')
-  //   if (container) console.log(container.clientHeight, iframe.clientHeight)
-  // }
-
 
 //////////////////////////
 // LAYOUT BUILD METHODS //
@@ -443,7 +436,6 @@ export default class AppMobile extends PureComponent {
 
   handleHover(cel) {
     if (cel.hover && cel.hover !== this.lastHover) {
-      console.log('hover ran')
       clearTimeout(this.hoverTimeout);
       this.lastHover = cel.hover;
       this.toggleSubset(cel.hover);
@@ -472,21 +464,24 @@ export default class AppMobile extends PureComponent {
 
   render() {
     const { isMobile, isHorizontal, iframeFocus } = this.state;
-    const toggleHide = iframeFocus ? 'active ' : 'inactive';
-
     const appStyle = isMobile
-      ? { height: isHorizontal ? '100vh' : '100%',
-          justifyContent: isHorizontal ? 'flex-end' : 'center' }
+      ? {
+          height: isHorizontal ? '100vh' : '100%',
+          justifyContent: isHorizontal ? 'flex-end' : 'center'
+        }
       : null;
-
     const mainStyle = isMobile
-      ? { margin: isHorizontal ? 0 :
-          (window.innerHeight - (this.refs.grid || 0).clientHeight) / 3 + 'px 0 0 0' }
+      ? {
+          margin: isHorizontal
+            ? 0
+            : (window.innerHeight - (this.refs.grid || 0).clientHeight) / 3 +
+              'px 0 0 0'
+        }
       : null;
-
     const gridStyle = !isMobile
       ? { margin: this.celHeight / 3 + 'px 0 0 0' }
       : null;
+    const toggleHide = iframeFocus ? 'active ' : 'inactive';
 
     return (
       <div id="App" style={appStyle}>
