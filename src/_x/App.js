@@ -3,118 +3,53 @@ import { d3, randomLetter, emptyGrid } from './_help.js';
 import content from './_content.js';
 import './App.css';
 
-export default class AppMobile extends PureComponent {
+export default class App extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
       rows: undefined,
       cols: undefined,
-      horizontal: false,
       isLoaded: false,
       resize: false,
       skills: false,
       projects: false,
       contact: false,
       links: false,
+      focus: false,
     };
     this.celRatio = (2 / 3);
-    this.celHeight = 18;
+    this.celHeight = 14;
     this.celWidth = this.celHeight * this.celRatio;
     this.grid = [];
-    this.makeGrid = this.makeGrid.bind(this);
-    this.handleRotate = this.handleRotate.bind(this);
-    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.url = '';
+    this.iframeStyle = {};
+    this.handleResize = this.handleResize.bind(this);
+    this.handleHover = this.handleHover.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.makeGrid = this.makeGrid.bind(this);
   };
 
   componentDidMount() {
     Object.assign(this, content);
-    const horizontal = this.configureCels();
-    this.configureText(horizontal);
-    this.makeGrid(horizontal);
-    this.refs.grid.addEventListener('touchmove', this.handleTouchMove);
-    window.addEventListener('resize', this.handleRotate);
+    window.addEventListener('resize', this.handleResize);
+    this.makeGrid();
   };
 
-  configureCels() {
-    const { innerWidth, innerHeight } = window;
-    const horizontal = innerWidth > innerHeight;
-    const w = (innerWidth / (horizontal ? 50 : 31));
-    const h = (innerHeight / (horizontal ? 21 : 30));
-    if (w < this.celWidth || h < this.celHeight) {
-      if (w < h * this.celRatio) {
-        this.celWidth = w;
-        this.celHeight = w / this.celRatio;
-      } else {
-        this.celWidth = h * this.celRatio;
-        this.celHeight = h;
-      };
-    };
-    return horizontal;
-  };
-
-  configureText(horizontal) {
-    const { text, projects, skills, links, contact } = this;
-    if (!horizontal) {
-      text[0].posY = .5;
-      text[1].posY = .6;
-      text[2].posX = .22;
-      text[2].posY = .18;
-      text[3].posX = .7;
-      text[3].posY = .4;
-      text[4].posX = .15;
-      text[5].posX = .85;
-      text[5].posY = .75;
-      projects.offsetX = 3;
-      projects.offsetY = 3;
-      projects.deltaX = 1;
-      skills.offsetX = 5;
-      skills.deltaX = -.7;
-      links.offsetX = 2;
-      links.deltaX = .9;
-      contact.display[0].str = 'email';
-      contact.offsetX = -5;
-      contact.offsetY = 3;
-    } else {
-      text[0].posY = .75;
-      text[1].posY = .85;
-      text[2].posX = .15;
-      text[2].posY = .14;
-      text[3].posX = .45;
-      text[3].posY = .58;
-      text[4].posX = .24;
-      text[5].posX = .82;
-      text[5].posY = .35;
-      projects.offsetX = 6;
-      projects.offsetY = 2;
-      projects.deltaX = 1;
-      skills.offsetX = -2;
-      skills.deltaX = 1.2;
-      links.offsetX = -3;
-      links.deltaX = -1;
-      contact.display[0].str = 'mparkerkozak@gmail.com';
-      contact.offsetX = -2;
-      contact.offsetY = 3;
-    };
-    content.inheritPosition();
-  };
-
-  makeGrid(horizontal) {
-    const { innerWidth, innerHeight } = window;
+  makeGrid() {
     const { celHeight, celWidth, text } = this;
+    const { minWidth, minHeight } = this.props;
     const { isLoaded } = this.state;
     const { grid } = this.refs;
-    const cols = Math.floor(innerWidth / celWidth);
-    const rows = Math.floor(innerHeight / celHeight);
+    const cols = Math.floor((Math.max(window.innerWidth, minWidth) * .95) / celWidth);
+    const rows = Math.floor((Math.max(window.innerHeight, minHeight) * .95) / celHeight);
     const width = cols * celWidth;
     const height = rows * celHeight;
-    console.log('make grid', cols, rows)
 
     d3.selectAll('text').remove();
     grid.style.width = width + 'px';
     grid.style.height = height + 'px';
 
-    this.drawGrid(this.grid = emptyGrid(cols, rows, isLoaded ? 250 : 300));
+    this.drawGrid(this.grid = emptyGrid(cols, rows, isLoaded ? 250 : 500));
     text.forEach(d => {
       d.delayIncr = !isLoaded;
       this.introTimeout = setTimeout(() => {
@@ -124,7 +59,7 @@ export default class AppMobile extends PureComponent {
       }, isLoaded ? 0 : d.t);
     });
 
-    this.setState(prevState => ({ cols, rows, horizontal, isLoaded: true, resize: false }));
+    this.setState(prevState => ({ cols, rows, isLoaded: true, resize: false }));
   };
 
   drawGrid(cels) {
@@ -144,17 +79,18 @@ export default class AppMobile extends PureComponent {
         .style('font-size', celHeight + 'px')
         .style('text-align', 'center')
         .style('opacity', 0)
+        .on('mouseover', this.handleHover)
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
         .style('opacity', d => d.cl ? 1 : .5);
   };
 
   undrawGrid(cels) {
-    d3.selectAll('.delete').remove();
     cels.forEach(d => {
       d3.select(`#${d.id}`)
         .attr('class', 'delete')
         .attr('id', null)
+        .on('mouseover', null)
         .on('click', null)
         .transition()
           .delay(d.delay / 1.5)
@@ -188,7 +124,7 @@ export default class AppMobile extends PureComponent {
     const { cols, rows } = this.state;
     const queue = [];
     const r = Math.floor(posY * rows) + (adjR ? adjR : 0);
-    let c = Math.floor((posX * cols) + (adjC ? adjC : 0) + (-str.length / 2));
+    let c = Math.floor((posX * cols) + (adjC ? adjC : (-str.length / 2)));
     str.split('').forEach((text, i) => {
       const cel = this.grid[cols * r + c++];
       if (text !== ' ') {
@@ -221,6 +157,94 @@ export default class AppMobile extends PureComponent {
     this.replaceCels(cels);
   };
 
+  setIframeDimensions(focus) {
+    const { celHeight, celWidth } = this;
+    const { rows, cols } = this.state;
+    const { ratio } = this.projects.data[focus];
+    let width = cols - 10;
+    let height = Math.round((width * celWidth / ratio) / celHeight);
+    if (height > (rows - 5)) {
+      height = rows - 5;
+      width = Math.round(height * celHeight * ratio / celWidth);
+    };
+    const startCol = Math.floor((cols - width) / 2);
+    const startRow = Math.max(Math.floor((rows - height) / 3), 2);
+
+    this.iframeStyle = {
+      width: (width * celWidth)  + 'px',
+      height: (height * celHeight) + 'px',
+      left: (startCol * celWidth) + 'px',
+      top: (startRow * celHeight) + 'px',
+    };
+    // const { container } = this.refs;
+    // container.style.width = (width * celWidth);
+    // container.style.height = (height * celHeight);
+    // container.style.left = (startCol * celWidth);
+    // container.style.top = (startRow * celHeight);
+
+    return { width, height, startCol, startRow };
+  };
+
+  makeIframeText(url, startRow, height) {
+    const queue = this.populateGrid({
+      str: url.substring(8),
+      cl: 'info',
+      posX: .5,
+      posY: (startRow + height) / this.state.rows,
+      fill: '#FDA50F',
+      adjR: 1,
+      action: url
+    });
+    this.undrawGrid(queue);
+    this.drawGrid(queue);
+  };
+
+  showIframe(focus) {
+    this.url = this.projects.data[focus].url;
+    const { width, height, startCol, startRow } = this.setIframeDimensions(focus);
+    this.setState(prevState => ({ focus }));
+    this.hideSubset();
+    const clear = this.grid.filter(d =>
+      d.c >= startCol &&
+      d.c < (startCol + width) &&
+      d.r >= startRow &&
+      d.r < (startRow + height)
+    );
+    clear.forEach(d => {
+      d.cl = 'hidden';
+      d.delay = 1500 * Math.random();
+    });
+    this.undrawGrid(clear);
+    this.makeIframeText(this.url, startRow, height);
+  };
+
+  hideIframe() {
+    this.replaceCels(this.grid.filter(d => d.cl === 'hidden' || d.cl === 'info'));
+    this.text.forEach(d => {
+      const queue = this.populateGrid(d);
+      this.undrawGrid(queue);
+      this.drawGrid(queue);
+    });
+      this.url = false;
+      this.setState(prevState => ({ focus: false }));
+  };
+
+  handleResize() {
+    const { focus, resize } = this.state;
+    if (focus) {
+      this.url = false;
+      this.setState(prevState => ({ focus: false }));
+    }
+    if (!resize) {
+      clearTimeout(this.introTimeout);
+      clearTimeout(this.hoverTimeout);
+      this.setState(prevState => ({ resize: false }));
+      this.undrawGrid(this.grid);
+    };
+    clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = setTimeout(this.makeGrid, 500);
+  };
+
   handleHover(cel) {
     const { cl, hover } = cel;
     if (hover) {
@@ -235,36 +259,15 @@ export default class AppMobile extends PureComponent {
     };
   };
 
-  handleRotate() {
-    clearTimeout(this.introTimeout);
-    this.undrawGrid(this.grid);
-    this.celHeight = 18;
-    this.celWidth = this.celHeight * this.celRatio;
-    const horizontal = this.configureCels();
-    this.configureText(horizontal);
-    this.makeGrid(horizontal);
-  };
-
-  handleTouchMove(e) {
-    e.preventDefault();
-    const { clientX, clientY } = e.changedTouches[0];
-    const el = document.elementFromPoint(clientX, clientY);
-    const cel = el ? this.grid[el.id.substring(3)] : null;
-    if (cel) this.handleHover(cel);
-  };
-
   handleClick(cel) {
-    const { cl, hover, action } = cel;
-    if (hover) {
-      if (this.state[hover]) this.hideSubset(hover);
-      else this.showSubset(hover);
-      this.setState(prevState => ({ [hover]: !prevState[hover] }));
-    } else if (!cl) {
-      this.letterSwap(cel);
+    const { cl, action } = cel;
+    const { focus } = this.state;
+    if (!action && focus) {
+      this.hideIframe();
     } else {
       switch (cl) {
         case 'projects' :
-          window.open(this.projects.data[action].url, '_blank');
+          this.showIframe(action);
           break;
         case 'links' :
           window.open(action, '_blank');
@@ -282,18 +285,28 @@ export default class AppMobile extends PureComponent {
 
 
   render() {
-    const { horizontal } = this.state;
-    const appStyle = {
-      height: horizontal ? '100vh' : '100%',
-      justifyContent: horizontal ? 'flex-end' : 'center'
+    const { url, iframeStyle } = this;
+    const { minWidth, minHeight } = this.props;
+    const { focus } = this.state;
+    const style = {
+      // minWidth: minWidth + 'px',
+      // minHeight: minHeight + 'px'
     };
-    const mainStyle = {
-      margin: horizontal ? '0' : '1vh 0'
-    };
+    const toggleHide = focus ? 'active' : 'hidden';
     return (
-      <div className="App" style={appStyle}>
-        <div className="main" style={mainStyle}>
+      <div className="App" style={style}>
+        <div className="main">
           <div ref="grid" className="grid" />
+          <div ref="container" id={'iframe-container'} className={toggleHide} style={iframeStyle}>
+            <iframe
+              id={focus || null}
+              className={toggleHide}
+              allow="camera;microphone"
+              src={url || null}
+              title="project"
+              scrolling="no"
+            />
+          </div>
         </div>
       </div>
     );

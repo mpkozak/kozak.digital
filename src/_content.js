@@ -111,7 +111,7 @@ content.skills = {
     { str: 'javascript' }
   ],
   fill: '#20BB20',
-  offsetX: 1,
+  offsetX: 0,
   offsetY: -2,
   deltaX: .3,
   deltaY: -1

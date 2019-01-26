@@ -108,7 +108,6 @@ export default class AppMobile extends PureComponent {
     const rows = Math.floor(innerHeight / celHeight);
     const width = cols * celWidth;
     const height = rows * celHeight;
-    console.log('make grid', cols, rows)
 
     d3.selectAll('text').remove();
     grid.style.width = width + 'px';

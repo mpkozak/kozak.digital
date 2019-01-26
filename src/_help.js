@@ -1,10 +1,10 @@
 import * as selection from 'd3-selection';
 import * as transition from 'd3-transition';
 
-export const d3 = Object.assign(selection, transition);
-
-
 const alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
+
+
+export const d3 = Object.assign(selection, transition);
 
 export const randomLetter = () => alpha[Math.floor(Math.random() * 26)];
 
@@ -15,16 +15,21 @@ export const emptyGrid = (cols, rows, delay = 100) => {
   let id = 0;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const cel = { c, r };
-      cel.id = `cel${id++}`;
-      cel.text = randomLetter();
-      cel.delay = dScale * (tScalar * ((2 * r) + c) + Math.random());
-      grid.push(cel);
+      grid.push({
+        c,
+        r,
+        id: `cel${id++}`,
+        delay: dScale * (tScalar * ((2 * r) + c) + Math.random()),
+        text: randomLetter()
+      });
     };
   };
   return grid;
 };
 
+
+// c, r, id, delay, text, fill, cl, hover, action
+// str, fill, cl, hover, action, posX, posY, adjC, adjR, delayIncr
 
 // //white
 // '#FFFFFF'
