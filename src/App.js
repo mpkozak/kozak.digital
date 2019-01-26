@@ -23,8 +23,9 @@ export default class AppMobile extends PureComponent {
     this.celHeight = 18;
     this.celWidth = this.celHeight * this.celRatio;
     this.grid = [];
-    this.containerStyle = {};
+    this.lastHover = false;
     this.url = '';
+    this.containerStyle = {};
     this.layoutRefresh = this.layoutRefresh.bind(this);
     this.layoutRefreshMobile = this.layoutRefreshMobile.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -41,11 +42,6 @@ export default class AppMobile extends PureComponent {
     } else {
       this.layoutRefresh();
       window.addEventListener('resize', this.layoutRefresh);
-      // this.refs.grid.addEventListener('mousemove', (e) => {
-      //   const id = e.target.id.substring(3)
-      //   this.handleHover(this.grid[id])
-      //   // console.log(id)
-      // })
     };
   };
 
@@ -69,8 +65,6 @@ export default class AppMobile extends PureComponent {
       this.undrawGrid(this.grid);
     };
     if (this.state.iframeFocus) {
-      // this.containerStyle = {};
-      // this.url = false;
       this.setState(prevState => ({ iframeFocus: false }));
     };
     clearTimeout(this.resizeTimeout);
@@ -182,7 +176,11 @@ export default class AppMobile extends PureComponent {
     });
 
     this.setState(prevState => ({
-      isLoaded: true, isResizing: false, isHorizontal, cols, rows
+      isHorizontal,
+      cols,
+      rows,
+      isLoaded: true,
+      isResizing: false
     }));
   };
 
@@ -394,7 +392,6 @@ export default class AppMobile extends PureComponent {
 /////////////////////
 
   toggleSubset(hover) {
-    // clearTimeout(this.hoverTimeout);
     if (this.state[hover]) {
       this.hideSubset(hover);
     } else {
@@ -442,38 +439,9 @@ export default class AppMobile extends PureComponent {
     } else {
       this.toggleClickAction(cl, action);
     };
-
-  //v2
-    // if (!isMobile && !action && iframeFocus) {
-    //   this.hideIframe();
-    // } else if (isMobile && hover) {
-    //   this.toggleSubset(hover);
-    // } else if (!cl) {
-    //   this.letterSwap(cel);
-    // } else {
-    //   this.toggleClickAction(cl, action);
-    // };
-  //orig
-    // if (!isMobile && !action && iframeFocus) {
-    //   this.hideIframe();
-    // } else {
-    //   this.toggleClickAction(cl, action);
-    // };
-    // if (isMobile && hover) {
-    //   this.toggleSubset(hover);
-    // } else if (!cl) {
-    //   this.letterSwap(cel);
-    // } else {
-    //   this.toggleClickAction(cl, action);
-    // };
   };
 
   handleHover(cel) {
-    // if (cel.hover) {
-      // clearTimeout(this.hoverTimeout);
-      // this.hoverTimeout = setTimeout(() => {
-      //   this.toggleSubset(cel.hover);
-      // }, 300);
     if (cel.hover && cel.hover !== this.lastHover) {
       console.log('hover ran')
       clearTimeout(this.hoverTimeout);
@@ -486,7 +454,6 @@ export default class AppMobile extends PureComponent {
       this.letterSwap(cel);
     };
   };
-
 
   handleTouchMove(e) {
     e.preventDefault();
@@ -505,28 +472,26 @@ export default class AppMobile extends PureComponent {
 
   render() {
     const { isMobile, isHorizontal, iframeFocus } = this.state;
-    const { grid } = this.refs;
     const toggleHide = iframeFocus ? 'active ' : 'inactive';
 
-    const gridStyle = {
-      margin: (this.celHeight / 3) + 'px 0 0 0'
-    };
+    const appStyle = isMobile
+      ? { height: isHorizontal ? '100vh' : '100%',
+          justifyContent: isHorizontal ? 'flex-end' : 'center' }
+      : null;
 
-    const appStyleMobile = {
-      height: isHorizontal ? '100vh' : '100%',
-      justifyContent: isHorizontal ? 'flex-end' : 'center'
-    };
-    const mainStyleMobile = {
-      margin:
-        isHorizontal
-        ? '0'
-        : (grid ? (window.innerHeight - grid.clientHeight) / 3 : 0) + 'px 0 0 0'
-    };
+    const mainStyle = isMobile
+      ? { margin: isHorizontal ? 0 :
+          (window.innerHeight - (this.refs.grid || 0).clientHeight) / 3 + 'px 0 0 0' }
+      : null;
+
+    const gridStyle = !isMobile
+      ? { margin: this.celHeight / 3 + 'px 0 0 0' }
+      : null;
 
     return (
-      <div id="App" style={isMobile ? appStyleMobile : null}>
-        <div id="main" style={isMobile ? mainStyleMobile : null}>
-          <div ref="grid" style={!isMobile ? gridStyle: null} />
+      <div id="App" style={appStyle}>
+        <div id="main" style={mainStyle}>
+          <div ref="grid" className={isMobile ? 'static' : null} style={gridStyle} />
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
               <iframe
