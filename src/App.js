@@ -41,12 +41,20 @@ export default class AppMobile extends PureComponent {
     } else {
       this.layoutRefresh();
       window.addEventListener('resize', this.layoutRefresh);
+      // this.refs.grid.addEventListener('mousemove', (e) => {
+      //   const id = e.target.id.substring(3)
+      //   this.handleHover(this.grid[id])
+      //   // console.log(id)
+      // })
     };
   };
 
-  componentDidUpdate() {
-    console.log(this.state.cols, this.state.rows)
-  }
+  // componentDidUpdate() {
+  //   console.log(this.state.cols, this.state.rows)
+  //   const container = document.getElementById('container')
+  //   const iframe = document.getElementById('iframe')
+  //   if (container) console.log(container.clientHeight, iframe.clientHeight)
+  // }
 
 
 //////////////////////////
@@ -57,11 +65,12 @@ export default class AppMobile extends PureComponent {
     if (!this.state.isResizing) {
       clearTimeout(this.introTimeout);
       clearTimeout(this.hoverTimeout);
-      this.setState(prevState => ({ isResizing: false }));
+      this.setState(prevState => ({ isResizing: true }));
       this.undrawGrid(this.grid);
     };
     if (this.state.iframeFocus) {
-      this.url = false;
+      // this.containerStyle = {};
+      // this.url = false;
       this.setState(prevState => ({ iframeFocus: false }));
     };
     clearTimeout(this.resizeTimeout);
@@ -161,16 +170,15 @@ export default class AppMobile extends PureComponent {
     grid.style.width = width + 'px';
     grid.style.height = height + 'px';
 
-    this.drawGrid(
-      this.grid = emptyGrid(cols, rows, isLoaded ? 250 : 400)
+    this.drawGrid(this.grid =
+      emptyGrid(cols, rows, isLoaded ? false : (isMobile ? 300 : 500))
     );
     text.forEach(d => {
-      d.delayIncr = !isLoaded;
       this.introTimeout = setTimeout(() => {
         const queue = this.populateGrid(d);
         this.undrawGrid(queue);
         this.drawGrid(queue);
-      }, isLoaded ? d.t / 2 : d.t);
+      }, isLoaded ? (d.t / 4) : d.t);
     });
 
     this.setState(prevState => ({
@@ -214,7 +222,7 @@ export default class AppMobile extends PureComponent {
           .on('mouseover', null)
           .on('click', null)
         .transition()
-          .delay(d.delay / 1.5)
+          .delay(Math.floor(d.delay / 1.5))
           .style('opacity', 0)
           .remove();
     });
@@ -240,50 +248,21 @@ export default class AppMobile extends PureComponent {
     const queue = [];
     const r = Math.floor(posY * rows) + (adjR ? adjR : 0);
     const midpoint = (-str.length / 2);
-    let c1 = Math.floor(
+    let c = Math.floor(
       (posX * cols) +
       (adjC ? adjC : (!isMobile ? midpoint : 0)) +
       (isMobile ? midpoint : 0)
     );
-    let c = Math.floor(
-      (posX * cols) +
-      (adjC ? adjC : midpoint) +
-      (isMobile ? midpoint : 0)
-    //   // (posX * cols) + (adjC ? adjC : (isMobile ? (2 * midpoint) : midpoint))
-    );
-
-    console.log(c1, c)
-//mobile
-    // (posX * cols) + (adjC ? adjC : 0) + midpoint
-//desktop
-    // (posX * cols) + (adjC ? adjC : midpoint)
-
-//adjC + mobile
-    // (posX * cols) + adjC + midpoint
-//adjC + desktop
-    // (posX * cols) + adjC
-
-//no adjC + mobile
-    // (posX * cols) + midpoint
-//no adjC + desktop
-    // (posX * cols) + midpoint
-
-//combined
-    // (posX * cols) + (!adjC ? midpoint : adjC) + (mobile ? midpoint : 0)
-    // (posX * cols) + (adjC ? adjC : midpoint) + (isMobile ? midpoint : 0)
-    // (posX * cols) + (adjC ? adjC : (isMobile ? (2 * midpoint) : midpoint))
-
-
     str.split('').forEach((text, i) => {
       const cel = this.grid[cols * r + c++];
       if (text !== ' ') {
         queue.push(Object.assign(cel, {
-          delay: 250 * (((delayIncr + i) / str.length) + Math.random()),
           text,
           fill,
           cl,
           hover,
-          action
+          action,
+          delay: Math.floor(250 * (((delayIncr + i) / str.length) + Math.random()))
         }));
       };
     });
@@ -294,15 +273,15 @@ export default class AppMobile extends PureComponent {
     const queue = [];
     display.forEach((d, i) => {
       queue.push(...this.populateGrid({
+        fill,
+        cl,
+        posX,
+        posY,
         str: d.str,
         action: d.action,
         adjC: offsetX + (deltaX * i) + (2 * Math.random() - 1),
         adjR: offsetY + (deltaY * i),
-        delayIncr: ((i + 1) / 2),
-        fill,
-        cl,
-        posX,
-        posY
+        delayIncr: ((i + 1) / 2)
       }));
     });
     this.undrawGrid(queue);
@@ -313,11 +292,11 @@ export default class AppMobile extends PureComponent {
     let fill, cl, hover, action;
     const queue = cels.map((cel, i) => {
       return Object.assign(cel, {
-        text: randomLetter(),
         fill,
         cl,
         hover,
-        action
+        action,
+        text: randomLetter()
       });
     });
     this.undrawGrid(queue);
@@ -332,11 +311,90 @@ export default class AppMobile extends PureComponent {
   };
 
 
+////////////////////
+// IFRAME METHODS //
+////////////////////
+
+  setIframeSize(iframeFocus) {
+    const { ratio } = this.projects.data[iframeFocus];
+    const { celHeight, celWidth } = this;
+    const { cols, rows } = this.state;
+
+    let width = cols - 10;
+    let height = Math.round((width * celWidth / ratio) / celHeight);
+    if (height > (rows - 5)) {
+      height = rows - 5;
+      width = Math.round(height * celHeight * ratio / celWidth);
+    };
+    const startCol = Math.floor((cols - width) / 2);
+    const startRow = Math.max(Math.floor((rows - height) / 3), 2);
+
+    this.containerStyle = {
+      width: (width * celWidth).toFixed(2) + 'px',
+      height: (height * celHeight).toFixed(2) + 'px',
+      left: (startCol * celWidth).toFixed(2) + 'px',
+      top: (startRow * celHeight).toFixed(2) + 'px',
+    };
+
+    return { width, height, startCol, startRow };
+  };
+
+  makeIframeText(url, startRow, height) {
+    const queue = this.populateGrid({
+      str: url.substring(8),
+      fill: '#FDA50F',
+      cl: 'info',
+      action: url,
+      posX: .5,
+      posY: (startRow + height) / this.state.rows,
+      adjR: 1,
+    });
+    this.undrawGrid(queue);
+    this.drawGrid(queue);
+  };
+
+  showIframe(iframeFocus) {
+    const { width, height, startCol, startRow } =
+      this.setIframeSize(iframeFocus);
+    this.url = this.projects.data[iframeFocus].url;
+    this.setState(prevState => ({ iframeFocus }));
+    this.hideSubset();
+
+    const clear = this.grid.filter(d =>
+      d.c >= startCol &&
+      d.c < (startCol + width) &&
+      d.r >= startRow &&
+      d.r < (startRow + height)
+    );
+    clear.forEach(d => {
+      d.cl = 'hidden';
+      d.delay = Math.floor(1500 * Math.random());
+    });
+    this.undrawGrid(clear);
+
+    this.makeIframeText(this.url, startRow, height);
+  };
+
+  hideIframe() {
+    this.replaceCels(this.grid.filter(d =>
+      d.cl === 'hidden' || d.cl === 'info'
+    ));
+    this.text.forEach(d => {
+      const queue = this.populateGrid(d);
+      this.undrawGrid(queue);
+      this.drawGrid(queue);
+    });
+      this.url = false;
+      this.setState(prevState => ({ iframeFocus: false }));
+  };
+
+
 /////////////////////
 // EVENT CALLBACKS //
 /////////////////////
 
   toggleSubset(hover) {
+    // clearTimeout(this.hoverTimeout);
     if (this.state[hover]) {
       this.hideSubset(hover);
     } else {
@@ -377,39 +435,58 @@ export default class AppMobile extends PureComponent {
     const { isMobile, iframeFocus } = this.state;
     if (!isMobile && !action && iframeFocus) {
       this.hideIframe();
-    } else if (isMobile && hover) {
-      this.toggleSubset(hover);
+    } else if (hover) {
+      this.handleHover(cel);
     } else if (!cl) {
       this.letterSwap(cel);
     } else {
       this.toggleClickAction(cl, action);
     };
 
+  //v2
+    // if (!isMobile && !action && iframeFocus) {
+    //   this.hideIframe();
+    // } else if (isMobile && hover) {
+    //   this.toggleSubset(hover);
+    // } else if (!cl) {
+    //   this.letterSwap(cel);
+    // } else {
+    //   this.toggleClickAction(cl, action);
+    // };
+  //orig
     // if (!isMobile && !action && iframeFocus) {
     //   this.hideIframe();
     // } else {
-    //   this.toggleClickAction(cl, action, isMobile);
+    //   this.toggleClickAction(cl, action);
     // };
     // if (isMobile && hover) {
     //   this.toggleSubset(hover);
     // } else if (!cl) {
     //   this.letterSwap(cel);
     // } else {
-    //   this.toggleClickAction(cl, action, isMobile);
+    //   this.toggleClickAction(cl, action);
     // };
   };
 
   handleHover(cel) {
-    console.log(cel.hover)
-    if (cel.hover) {
+    // if (cel.hover) {
+      // clearTimeout(this.hoverTimeout);
+      // this.hoverTimeout = setTimeout(() => {
+      //   this.toggleSubset(cel.hover);
+      // }, 300);
+    if (cel.hover && cel.hover !== this.lastHover) {
+      console.log('hover ran')
       clearTimeout(this.hoverTimeout);
+      this.lastHover = cel.hover;
+      this.toggleSubset(cel.hover);
       this.hoverTimeout = setTimeout(() => {
-        this.toggleSubset(cel.hover);
-      }, 200);
+        this.lastHover = false;
+      }, 1000);
     } else if (!cel.cl) {
       this.letterSwap(cel);
     };
   };
+
 
   handleTouchMove(e) {
     e.preventDefault();
@@ -422,108 +499,37 @@ export default class AppMobile extends PureComponent {
   };
 
 
-////////////////////
-// IFRAME METHODS //
-////////////////////
-
-  setIframeSize(iframeFocus) {
-    const { ratio } = this.projects.data[iframeFocus];
-    const { celHeight, celWidth } = this;
-    const { cols, rows } = this.state;
-
-    let width = cols - 10;
-    let height = Math.round((width * celWidth / ratio) / celHeight);
-    if (height > (rows - 5)) {
-      height = rows - 5;
-      width = Math.round(height * celHeight * ratio / celWidth);
-    };
-    const startCol = Math.floor((cols - width) / 2);
-    const startRow = Math.max(Math.floor((rows - height) / 3), 2);
-
-    this.containerStyle = {
-      width: (width * celWidth).toFixed(2) + 'px',
-      height: (height * celHeight).toFixed(2) + 'px',
-      left: (startCol * celWidth).toFixed(2) + 'px',
-      top: (startRow * celHeight).toFixed(2) + 'px',
-    };
-    return { width, height, startCol, startRow };
-  };
-
-  makeIframeText(url, startRow, height) {
-    const queue = this.populateGrid({
-      str: url.substring(8),
-      fill: '#FDA50F',
-      cl: 'info',
-      action: url,
-      posX: .5,
-      posY: (startRow + height) / this.state.rows,
-      adjR: 1,
-    });
-    this.undrawGrid(queue);
-    this.drawGrid(queue);
-  };
-
-  showIframe(iframeFocus) {
-    const { width, height, startCol, startRow } = this.setIframeSize(iframeFocus);
-    this.url = this.projects.data[iframeFocus].url;
-    this.setState(prevState => ({ iframeFocus }));
-    this.hideSubset();
-
-    const clear = this.grid.filter(d =>
-      d.c >= startCol &&
-      d.c < (startCol + width) &&
-      d.r >= startRow &&
-      d.r < (startRow + height)
-    );
-    clear.forEach(d => {
-      d.cl = 'hidden';
-      d.delay = 1500 * Math.random();
-    });
-    this.undrawGrid(clear);
-
-    this.makeIframeText(this.url, startRow, height);
-  };
-
-  hideIframe() {
-    this.replaceCels(this.grid.filter(d =>
-      d.cl === 'hidden' || d.cl === 'info'
-    ));
-    this.text.forEach(d => {
-      const queue = this.populateGrid(d);
-      this.undrawGrid(queue);
-      this.drawGrid(queue);
-    });
-      this.url = false;
-      this.setState(prevState => ({ iframeFocus: false }));
-  };
-
-
 ////////////
 // RENDER //
 ////////////
 
   render() {
     const { isMobile, isHorizontal, iframeFocus } = this.state;
-    const toggleHide = iframeFocus ? 'active ' : 'hidden';
+    const { grid } = this.refs;
+    const toggleHide = iframeFocus ? 'active ' : 'inactive';
+
     const gridStyle = {
       margin: (this.celHeight / 3) + 'px 0 0 0'
     };
+
     const appStyleMobile = {
       height: isHorizontal ? '100vh' : '100%',
       justifyContent: isHorizontal ? 'flex-end' : 'center'
     };
     const mainStyleMobile = {
-      margin: isHorizontal ? '0' : '1vh 0'
+      margin:
+        isHorizontal
+        ? '0'
+        : (grid ? (window.innerHeight - grid.clientHeight) / 3 : 0) + 'px 0 0 0'
     };
 
     return (
-      <div className="App" style={isMobile ? appStyleMobile : null}>
-        <div className="main" style={isMobile ? mainStyleMobile : null}>
-          <div ref="grid" className="grid" style={!isMobile ? gridStyle: null} />
+      <div id="App" style={isMobile ? appStyleMobile : null}>
+        <div id="main" style={isMobile ? mainStyleMobile : null}>
+          <div ref="grid" style={!isMobile ? gridStyle: null} />
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
               <iframe
-                // id={iframeFocus || null}
                 id="iframe"
                 className={toggleHide + (iframeFocus || '')}
                 allow="camera;microphone"
@@ -538,18 +544,3 @@ export default class AppMobile extends PureComponent {
     );
   };
 };
-
-
-
-
-            // <button onClick={() => {
-            //   const iframe = document.getElementById('iframe')
-            //   if (iframe) {
-            //     const container = document.getElementById('container')
-            //     console.log('iframe classes', iframe.classList)
-            //     console.log('container classes', container.classList)
-            //     console.log('iframe height', iframe.clientHeight, iframe.clientWidth)
-            //     console.log('container height', container.clientHeight, container.clientWidth)
-            //     console.log('container style', this.containerStyle)
-            //   }
-            // }}>getinfo</button>

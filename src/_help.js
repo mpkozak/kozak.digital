@@ -8,7 +8,7 @@ export const d3 = Object.assign(selection, transition);
 
 export const randomLetter = () => alpha[Math.floor(Math.random() * 26)];
 
-export const emptyGrid = (cols, rows, delay = 100) => {
+export const emptyGrid = (cols, rows, delay) => {
   const grid = [];
   const tScalar = 250 / (cols * rows);
   const dScale = (delay / 5);
@@ -19,29 +19,12 @@ export const emptyGrid = (cols, rows, delay = 100) => {
         c,
         r,
         id: `cel${id++}`,
-        delay: dScale * (tScalar * ((2 * r) + c) + Math.random()),
+        delay: delay
+          ? Math.floor(dScale * (tScalar * ((2 * r) + c) + Math.random()))
+          : Math.floor(1000 * Math.random()),
         text: randomLetter()
       });
     };
   };
   return grid;
 };
-
-
-// c, r, id, delay, text, fill, cl, hover, action
-// str, fill, cl, hover, action, posX, posY, adjC, adjR, delayIncr
-
-// //white
-// '#FFFFFF'
-// //red
-// '#CB3030'
-// //orange
-// '#FDA50F'
-// //green
-// '#20BB20'
-// //blue
-// '#0089FF'
-// //purple
-// '#8E00FF'
-// //aqua
-// '#20A0A1'
