@@ -151,9 +151,6 @@ export default class AppMobile extends PureComponent {
     const { celHeight, celWidth, text } = this;
     const { isMobile, isLoaded } = this.state;
     const { grid } = this.refs;
-    // const scalar = isMobile ? 1 : .95;
-    // const cols = Math.floor((window.innerWidth * scalar) / celWidth);
-    // const rows = Math.floor((window.innerHeight * scalar) / celHeight);
     const margin = isMobile ? 0 : -2;
     const cols = Math.floor(window.innerWidth / celWidth) + (margin * 2);
     const rows = Math.floor(window.innerHeight / celHeight) + margin;
@@ -243,12 +240,19 @@ export default class AppMobile extends PureComponent {
     const queue = [];
     const r = Math.floor(posY * rows) + (adjR ? adjR : 0);
     const midpoint = (-str.length / 2);
-    let c = Math.floor(
+    let c1 = Math.floor(
       (posX * cols) +
       (adjC ? adjC : (!isMobile ? midpoint : 0)) +
       (isMobile ? midpoint : 0)
     );
+    let c = Math.floor(
+      (posX * cols) +
+      (adjC ? adjC : midpoint) +
+      (isMobile ? midpoint : 0)
+    //   // (posX * cols) + (adjC ? adjC : (isMobile ? (2 * midpoint) : midpoint))
+    );
 
+    console.log(c1, c)
 //mobile
     // (posX * cols) + (adjC ? adjC : 0) + midpoint
 //desktop
@@ -264,8 +268,10 @@ export default class AppMobile extends PureComponent {
 //no adjC + desktop
     // (posX * cols) + midpoint
 
-
-
+//combined
+    // (posX * cols) + (!adjC ? midpoint : adjC) + (mobile ? midpoint : 0)
+    // (posX * cols) + (adjC ? adjC : midpoint) + (isMobile ? midpoint : 0)
+    // (posX * cols) + (adjC ? adjC : (isMobile ? (2 * midpoint) : midpoint))
 
 
     str.split('').forEach((text, i) => {
@@ -339,10 +345,10 @@ export default class AppMobile extends PureComponent {
     this.setState(prevState => ({ [hover]: !prevState[hover] }));
   };
 
-  toggleClickAction(cl, action, isMobile) {
+  toggleClickAction(cl, action) {
     switch (cl) {
       case 'projects' :
-        if (isMobile) {
+        if (this.state.isMobile) {
           window.open(this.projects.data[action].url, '_blank');
         } else {
           this.showIframe(action);
@@ -376,7 +382,7 @@ export default class AppMobile extends PureComponent {
     } else if (!cl) {
       this.letterSwap(cel);
     } else {
-      this.toggleClickAction(cl, action, isMobile);
+      this.toggleClickAction(cl, action);
     };
 
     // if (!isMobile && !action && iframeFocus) {
@@ -394,6 +400,7 @@ export default class AppMobile extends PureComponent {
   };
 
   handleHover(cel) {
+    console.log(cel.hover)
     if (cel.hover) {
       clearTimeout(this.hoverTimeout);
       this.hoverTimeout = setTimeout(() => {
@@ -419,7 +426,7 @@ export default class AppMobile extends PureComponent {
 // IFRAME METHODS //
 ////////////////////
 
-  setIframeDimensions(iframeFocus) {
+  setIframeSize(iframeFocus) {
     const { ratio } = this.projects.data[iframeFocus];
     const { celHeight, celWidth } = this;
     const { cols, rows } = this.state;
@@ -434,10 +441,10 @@ export default class AppMobile extends PureComponent {
     const startRow = Math.max(Math.floor((rows - height) / 3), 2);
 
     this.containerStyle = {
-      width: (width * celWidth)  + 'px',
-      height: (height * celHeight) + 'px',
-      left: (startCol * celWidth) + 'px',
-      top: (startRow * celHeight) + 'px',
+      width: (width * celWidth).toFixed(2) + 'px',
+      height: (height * celHeight).toFixed(2) + 'px',
+      left: (startCol * celWidth).toFixed(2) + 'px',
+      top: (startRow * celHeight).toFixed(2) + 'px',
     };
     return { width, height, startCol, startRow };
   };
@@ -457,10 +464,7 @@ export default class AppMobile extends PureComponent {
   };
 
   showIframe(iframeFocus) {
-    const {
-      width, height, startCol, startRow
-    } = this.setIframeDimensions(iframeFocus);
-
+    const { width, height, startCol, startRow } = this.setIframeSize(iframeFocus);
     this.url = this.projects.data[iframeFocus].url;
     this.setState(prevState => ({ iframeFocus }));
     this.hideSubset();
@@ -500,7 +504,7 @@ export default class AppMobile extends PureComponent {
 
   render() {
     const { isMobile, isHorizontal, iframeFocus } = this.state;
-    const toggleHide = iframeFocus ? 'active' : 'hidden';
+    const toggleHide = iframeFocus ? 'active ' : 'hidden';
     const gridStyle = {
       margin: (this.celHeight / 3) + 'px 0 0 0'
     };
@@ -519,8 +523,9 @@ export default class AppMobile extends PureComponent {
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
               <iframe
-                id={iframeFocus || null}
-                className={toggleHide}
+                // id={iframeFocus || null}
+                id="iframe"
+                className={toggleHide + (iframeFocus || '')}
                 allow="camera;microphone"
                 src={this.url || null}
                 title="project"
@@ -533,3 +538,18 @@ export default class AppMobile extends PureComponent {
     );
   };
 };
+
+
+
+
+            // <button onClick={() => {
+            //   const iframe = document.getElementById('iframe')
+            //   if (iframe) {
+            //     const container = document.getElementById('container')
+            //     console.log('iframe classes', iframe.classList)
+            //     console.log('container classes', container.classList)
+            //     console.log('iframe height', iframe.clientHeight, iframe.clientWidth)
+            //     console.log('container height', container.clientHeight, container.clientWidth)
+            //     console.log('container style', this.containerStyle)
+            //   }
+            // }}>getinfo</button>
