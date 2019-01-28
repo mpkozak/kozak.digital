@@ -101,7 +101,7 @@ layout.mobileH = {
     posY: .58,
     offsetX: -2,
     offsetY: -2,
-    deltaX: -1,
+    deltaX: 1.2,
     deltaY: -1
   },
   projects: {
@@ -125,7 +125,7 @@ layout.mobileH = {
     posY: .9,
     offsetX: -3,
     offsetY: -2,
-    deltaX: .75,
+    deltaX: -.75,
     deltaY: -2
   }
 };
