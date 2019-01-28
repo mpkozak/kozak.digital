@@ -1,6 +1,6 @@
 
 
-export const content = {
+const content = {
   title: {
     str: 'this is not a website',
     cl: 'fixed',
@@ -36,13 +36,62 @@ export const content = {
     str: 'projects',
     cl: 'fixed',
     t: 2750,
-    hover: {},
+    hover: {
+      subset: [
+        {
+          str: 'drive my car',
+          click: 'drive'
+        },
+        {
+          str: 'sleepy',
+          click: 'sleepy'
+        },
+        {
+          str: 'αdex',
+          click: 'adex'
+        },
+      ],
+      data: {
+        drive: {
+          name: 'drive my car',
+          date: 'sep 2018',
+          tech: ['javascript', 'html', 'css'],
+          git: 'https://github.com/mpkozak/drive/',
+          url: 'https://kozak.digital/drive',
+          ratio: (16 / 9)
+        },
+        sleepy: {
+          name: 'sleepy',
+          date: 'oct 2018',
+          tech: ['react', 'd3', 'sql', 'node', 'express'],
+          git: '#',
+          url: 'https://kozak.digital/sleepy',
+          ratio: (9 / 16)
+        },
+        adex: {
+          name: 'αdex',
+          date: 'dec 2018',
+          tech: ['webaudio api', 'react', 'd3'],
+          git: 'https://github.com/mpkozak/a.dex/',
+          url: 'https://kozak.digital/adex',
+          ratio: (17 / 15)
+        },
+      },
+    },
   },
   contact: {
     str: 'contact',
     cl: 'fixed',
     t: 3000,
-    hover: {},
+    hover: {
+      subset: [
+        {
+          str: 'mparkerkozak@gmail.com',
+          strMobileV: 'email',
+          click: 'mailto:mparkerkozak@gmail.com'
+        }
+      ],
+    },
   },
   links: {
     str: 'links',
@@ -52,27 +101,27 @@ export const content = {
       subset: [
         {
           str: 'resume',
-          url: 'http://kozak.digital/_files/kozak_resume.pdf'
+          click: 'http://kozak.digital/_files/kozak_resume.pdf'
         },
         {
           str: 'imdb',
-          url: 'https://www.imdb.com/name/nm3362994/'
+          click: 'https://www.imdb.com/name/nm3362994/'
         },
         {
           str: 'github',
-          url: 'https://github.com/mpkozak'
+          click: 'https://github.com/mpkozak'
         },
         {
           str: 'linkedin',
-          url: 'https://www.linkedin.com/in/mpkozak/'
+          click: 'https://www.linkedin.com/in/mpkozak/'
         },
         {
           str: 'codepen',
-          url: 'https://codepen.io/mpkozak/pen/XoWNOQ'
+          click: 'https://codepen.io/mpkozak/pen/XoWNOQ'
         },
       ]
-    },
-  },
+    }
+  }
 }
 
 
@@ -91,12 +140,19 @@ content.projects.hover.fill = '#00A2FF';
 content.contact.hover.fill = '#AF57E4';
 content.links.hover.fill = '#2AA7A7';
 
+Object.freeze(content)
 
+
+export default content;
 
 
 
 
 // console.log(main)
+
+
+// module.exports = { content };
+
 
 // export default Object.assign(...content, ...main);
 // module.exports = content
