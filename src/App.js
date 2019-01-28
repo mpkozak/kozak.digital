@@ -448,7 +448,8 @@ export default class AppMobile extends PureComponent {
     const appStyle = isMobile
       ? {
           height: isHorizontal ? '100vh' : '100%',
-          justifyContent: isHorizontal ? 'flex-end' : 'center'
+          justifyContent: isHorizontal ? 'flex-end' : 'center',
+          // overflow: isMobile ? 'visible' : 'hidden'
         }
       : null;
     const mainStyle = isMobile
