@@ -1,10 +1,5 @@
-import * as selection from 'd3-selection';
-import * as transition from 'd3-transition';
 
 const alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
-
-
-export const d3 = Object.assign(selection, transition);
 
 export const randomLetter = () => alpha[Math.floor(Math.random() * 26)];
 

@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import './App.css';
-import { d3, randomLetter, emptyGrid } from './_help.js';
-import content from './_content.js';
+import { d3 } from './_d3.js'
+import { randomLetter, emptyGrid } from './_help.js';
+import { content } from './_content.js';
+import { layout } from './_layout.js'
 
 export default class AppMobile extends PureComponent {
   constructor(props) {
@@ -39,16 +41,22 @@ export default class AppMobile extends PureComponent {
       if (e.target.classList[0] === 'contact') console.log(e)
     })
 
+    // console.log('content ', content, 'layout ', layout.main)
 
 
-    Object.assign(this, content);
+    // Object.assign(this, content);
     if (this.state.isMobile) {
       this.layoutRefreshMobile();
       this.refs.grid.addEventListener('touchmove', this.handleTouchMove);
       window.addEventListener('resize', this.layoutRefreshMobile);
     } else {
-      this.layoutRefresh();
-      window.addEventListener('resize', this.layoutRefresh);
+      // Object.assign({...content}, {...layout.main});
+      // Object.assign(this, content);
+      const joined = Object.assign(content, {...layout.main});
+      Object.assign(this, {...joined});
+      console.log(this.text)
+      // this.layoutRefresh();
+      // window.addEventListener('resize', this.layoutRefresh);
     };
   };
 
@@ -65,6 +73,7 @@ export default class AppMobile extends PureComponent {
       this.undrawGrid(this.grid);
     };
     if (this.state.iframeFocus) {
+      this.containerStyle = {};
       this.setState(prevState => ({ iframeFocus: false }));
     };
     clearTimeout(this.resizeTimeout);
@@ -202,14 +211,16 @@ export default class AppMobile extends PureComponent {
         .style('left', d => d.c * celWidth + 'px')
         .style('top', d => d.r * celHeight + 'px')
         .style('background-color', 'rgba(0, 0, 0, 0)')
-        .style('color', d => d.fill ? d.fill : '#999999')
+        // .style('color', d => d.fill ? d.fill : '#999999')
+        .style('color', d => d.fill ? d.fill : '#4A4B4D')
         .style('font-size', celHeight + 'px')
         .style('text-align', 'center')
         .style('opacity', 0)
         .on('mouseenter', !this.state.isMobile ? this.handleHover : null)
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
-        .style('opacity', d => d.cl ? 1 : .5);
+        // .style('opacity', d => d.cl ? 1 : .35);
+        .style('opacity', d => 1);
   };
 
   undrawGrid(cels) {
@@ -228,12 +239,25 @@ export default class AppMobile extends PureComponent {
 
   letterSwap(cel) {
     cel.text = randomLetter();
+    // d3.select(`#${cel.id}`)
+    //   .transition()
+    //     .style('opacity', 0)
+    //   .transition()
+    //     .text(cel.text)
+    //     .style('opacity', .35);
+
     d3.select(`#${cel.id}`)
       .transition()
         .style('opacity', 0)
       .transition()
+        .duration(cel.delay * 4)
         .text(cel.text)
-        .style('opacity', .5);
+        .style('opacity', .25)
+      .transition()
+        .duration(cel.delay * 10)
+        .delay(cel.delay * 5)
+        .text(cel.text)
+        .style('opacity', 1);
   };
 
 
@@ -400,10 +424,10 @@ export default class AppMobile extends PureComponent {
     this.setState(prevState => ({ [hover]: !prevState[hover] }));
   };
 
-  toggleClickAction(cl, action) {
+  toggleClickAction(cl, action, isMobile) {
     switch (cl) {
       case 'projects' :
-        if (this.state.isMobile) {
+        if (isMobile) {
           window.open(this.projects.data[action].url, '_blank');
         } else {
           this.showIframe(action);
@@ -413,7 +437,9 @@ export default class AppMobile extends PureComponent {
         window.open(action, '_blank');
         break;
       case 'contact' :
-        window.location = action;
+        if (isMobile) {
+          window.location = action;
+        };
         break;
       case 'info' :
         window.open(action, '_blank');
@@ -437,7 +463,7 @@ export default class AppMobile extends PureComponent {
     } else if (!cl) {
       this.letterSwap(cel);
     } else {
-      this.toggleClickAction(cl, action);
+      this.toggleClickAction(cl, action, isMobile);
     };
   };
 

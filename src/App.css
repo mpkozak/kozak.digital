@@ -16,11 +16,12 @@
   user-select: none;
 }
 
-.static {
+.static, .fixed {
+  /*text-shadow: 0 0 .2vmin #559;*/
   /*cursor: crosshair;*/
   /*cursor: all-scroll;*/
   /*cursor: move;*/
-  /*cursor: cell;*/
+  /*curs`or: cell;*/
 }
 
 .projects {
