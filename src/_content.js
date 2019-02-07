@@ -1,4 +1,3 @@
-
 const content = {
   title: {
     str: 'this is not a website',
@@ -123,60 +122,29 @@ const content = {
   }
 };
 
-const color0 = '#FFFFFF';
-const color1 = '#D24141';
-const color2 = '#FFAF24';
-const color3 = '#2BB62B';
-const color4 = '#2AB2B2';
-const color5 = '#5C98FF';
-const color6 = '#DD6EDD';
+const colors = [
+  '#FFFFFF',
+  '#D24141',
+  '#FFAF24',
+  '#2BB62B',
+  '#2AB2B2',
+  '#5C98FF',
+  '#DD6EDD'
+];
 
-content.title.fill = color0;
-content.name.fill = color1;
-content.skills.fill = color2;
-content.contact.fill = color2;
-content.projects.fill = color2;
-content.links.fill = color2;
-content.skills.hover.fill = color3;
-content.contact.hover.fill = color4;
-content.projects.hover.fill = color5;
-content.links.hover.fill = color6;
-
-
+content.title.fill = colors[0];
+content.name.fill = colors[1];
+content.skills.fill = colors[2];
+content.contact.fill = colors[2];
+content.projects.fill = colors[2];
+content.links.fill = colors[2];
+content.skills.hover.fill = colors[3];
+content.contact.hover.fill = colors[4];
+content.projects.hover.fill = colors[5];
+content.links.hover.fill = colors[6];
 
 Object.freeze(content);
 
+
+
 export default content;
-
-
-// content.title.fill = '#FFFFFF'
-// content.name.fill = '#CB3030'
-// const staticFill = '#FDA50F';
-
-// content.skills.hover.fill = '#2BB62B';
-// content.projects.hover.fill = '#5CA0FF';
-// content.contact.hover.fill = '#29AEAE';
-// content.links.hover.fill = '#CB70FF';
-
-// content.skills.fill = staticFill;
-// content.projects.fill = staticFill;
-// content.contact.fill = staticFill;
-// content.links.fill = staticFill;
-
-
-
-
-
-// content.title.fill = '#FFFFFF'
-// content.name.fill = '#CB3030'
-
-// const staticFill = '#FDA50F';
-// content.skills.fill = staticFill;
-// content.projects.fill = staticFill;
-// content.contact.fill = staticFill;
-// content.links.fill = staticFill;
-
-// content.skills.hover.fill = '#24C324';
-// content.projects.hover.fill = '#00A2FF';
-// content.contact.hover.fill = '#2AA7A7';
-// content.links.hover.fill = '#AF57E4';

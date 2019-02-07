@@ -1,4 +1,3 @@
-
 const alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
 
 export const randomLetter = () => alpha[Math.floor(Math.random() * 26)];

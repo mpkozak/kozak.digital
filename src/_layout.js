@@ -44,6 +44,7 @@ layout.main = {
   }
 };
 
+
 layout.mobileV = {
   title: {
     posX: .5,
@@ -134,32 +135,3 @@ layout.mobileH = {
 
 
 module.exports = layout;
-
-
-
-
-
-
-
-
-    // } else {
-    //   text[0].posY = .5;
-    //   text[1].posY = .6;
-    //   text[2].posX = .22;
-    //   text[2].posY = .18;
-    //   text[3].posX = .7;
-    //   text[3].posY = .4;
-    //   text[4].posX = .15;
-    //   text[5].posX = .85;
-    //   text[5].posY = .75;
-    //   projects.offsetX = 3;
-    //   projects.offsetY = 3;
-    //   projects.deltaX = 1;
-    //   skills.offsetX = 5;
-    //   skills.deltaX = -.7;
-    //   links.offsetX = 2;
-    //   links.deltaX = .9;
-    //   contact.display[0].str = 'email';
-    //   contact.offsetX = -5;
-    //   contact.offsetY = 3;
-

@@ -45,11 +45,6 @@ export default class AppMobile extends PureComponent {
       this.layoutRefresh();
       window.addEventListener('resize', this.layoutRefresh);
     };
-
-    // window.addEventListener('contextmenu', (e) => {
-    //   e.preventDefault();
-    //   if (e.target.classList[0] === 'contact') console.log(e)
-    // })
   };
 
 
@@ -65,7 +60,6 @@ export default class AppMobile extends PureComponent {
       this.undrawGrid(this.grid);
     };
     if (this.state.iframe) {
-      // this.containerStyle = {};
       this.setState(prevState => ({ iframe: false }));
     };
     clearTimeout(this.resizeTimeout);
@@ -160,7 +154,6 @@ export default class AppMobile extends PureComponent {
         .style('left', d => d.c * celWidth + 'px')
         .style('top', d => d.r * celHeight + 'px')
         .style('background-color', 'rgba(0, 0, 0, 0)')
-        // .style('color', d => d.fill ? d.fill : '#999999')
         .style('color', d => d.fill ? d.fill : '#4A4B4D')
         .style('font-size', celHeight + 'px')
         .style('text-align', 'center')
@@ -168,8 +161,7 @@ export default class AppMobile extends PureComponent {
         .on('mouseenter', !this.state.isMobile ? this.handleHover : null)
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
-        // .style('opacity', d => d.cl ? 1 : .35);
-        .style('opacity', d => 1);
+        .style('opacity', 1);
   };
 
   undrawGrid(cels) {
@@ -194,16 +186,6 @@ export default class AppMobile extends PureComponent {
       .transition()
         .text(cel.text)
         .style('opacity', 1);
-    // d3.select(`#${cel.id}`)
-    //   .transition()
-    //     .style('opacity', 0)
-    //   .transition()
-    //     .duration(1000)
-    //     .text(cel.text)
-    //     .style('opacity', .25)
-    //   .transition()
-    //     .duration(3000)
-    //     .style('opacity', 1);
   };
 
 
@@ -325,8 +307,7 @@ export default class AppMobile extends PureComponent {
 
   showIframe(iframe) {
     const { url, ratio } = content.projects.hover.data[iframe];
-    const { width, height, startCol, startRow } =
-      this.setIframeSize(ratio);
+    const { width, height, startCol, startRow } = this.setIframeSize(ratio);
     this.setState(prevState => ({ iframe, url }));
     this.hideSubset();
 
@@ -445,24 +426,19 @@ export default class AppMobile extends PureComponent {
 
   render() {
     const { isMobile, isHorizontal, iframe, url } = this.state;
-    const appStyle = isMobile
-      ? {
-          height: isHorizontal ? '100vh' : '100%',
-          justifyContent: isHorizontal ? 'flex-end' : 'center',
-          // overflow: isMobile ? 'visible' : 'hidden'
-        }
-      : null;
-    const mainStyle = isMobile
-      ? {
-          margin: isHorizontal
-            ? 0
-            : (window.innerHeight - (this.refs.grid || 0).clientHeight) / 3 +
-              'px 0 0 0'
-        }
-      : null;
-    const gridStyle = !isMobile
-      ? { margin: this.celHeight / 3 + 'px 0 0 0' }
-      : null;
+    const appStyle = !isMobile ? null : {
+      height: isHorizontal ? '100vh' : '100%',
+      justifyContent: isHorizontal ? 'flex-end' : 'center',
+      overflow: 'visible'
+    };
+    const mainStyle = !isMobile ? null : {
+      margin: isHorizontal
+        ? 0
+        : (window.innerHeight - (this.refs.grid || 0).clientHeight) / 3 + 'px 0 0 0'
+    };
+    const gridStyle = isMobile ? null : {
+      margin: this.celHeight / 3 + 'px 0 0 0'
+    };
     const toggleHide = iframe ? 'active ' : 'inactive';
 
     return (
