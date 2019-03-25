@@ -9,7 +9,6 @@ export default class AppMobile extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      isMobile: props.isMobile,
       isLoaded: false,
       isResizing: false,
       isHorizontal: false,
@@ -37,7 +36,7 @@ export default class AppMobile extends PureComponent {
   };
 
   componentDidMount() {
-    if (this.state.isMobile) {
+    if (this.props.isMobile) {
       this.layoutRefreshMobile();
       this.refs.grid.addEventListener('touchmove', this.handleTouchMove);
       window.addEventListener('resize', this.layoutRefreshMobile);
@@ -84,7 +83,7 @@ export default class AppMobile extends PureComponent {
 
   configureCels() {
     const { innerWidth, innerHeight } = window;
-    const { isMobile } = this.state;
+    const { isMobile } = this.props;
     const isHorizontal = innerWidth > innerHeight;
     const w = innerWidth / (!isMobile ? 56 : (isHorizontal ? 50 : 31));
     const h = innerHeight / (!isMobile ? 32 : (isHorizontal ? 21 : 30));
@@ -102,7 +101,8 @@ export default class AppMobile extends PureComponent {
 
   makeGrid(isHorizontal = false) {
     const { celHeight, celWidth } = this;
-    const { isMobile, isLoaded } = this.state;
+    const { isMobile } = this.props;
+    const { isLoaded } = this.state;
     const { grid } = this.refs;
     const margin = isMobile ? 0 : -2;
     const cols = Math.floor(window.innerWidth / celWidth) + (margin * 2);
@@ -158,7 +158,7 @@ export default class AppMobile extends PureComponent {
         .style('font-size', celHeight + 'px')
         .style('text-align', 'center')
         .style('opacity', 0)
-        .on('mouseenter', !this.state.isMobile ? this.handleHover : null)
+        .on('mouseenter', !this.props.isMobile ? this.handleHover : null)
         .on('click', this.handleClick)
       .transition().delay(d => d.delay)
         .style('opacity', 1);
@@ -194,7 +194,8 @@ export default class AppMobile extends PureComponent {
 //////////////////////////
 
   populateGrid({ str, fill, cl, hover, click, posX, posY, adjC = 0, adjR = 0, delayIncr = 1 }) {
-    const { isMobile, cols, rows } = this.state;
+    const { isMobile } = this.props;
+    const { cols, rows } = this.state;
     const queue = [];
     const r = Math.floor(posY * rows) + adjR;
     const midpoint = (-str.length / 2);
@@ -222,7 +223,7 @@ export default class AppMobile extends PureComponent {
   showSubset(group) {
     const { posX, posY, offsetX, offsetY, deltaX, deltaY } = this.layout[group];
     const { subset, fill } = content[group].hover;
-    const useAlt = this.state.isMobile && !this.state.isHorizontal;
+    const useAlt = this.props.isMobile && !this.state.isHorizontal;
     const queue = [];
     subset.forEach((d, i) => {
       queue.push(...this.populateGrid({
@@ -384,8 +385,8 @@ export default class AppMobile extends PureComponent {
 
   handleClick(cel) {
     const { cl, hover, click } = cel;
-    const { isMobile, iframe } = this.state;
-    if (!isMobile && !click && iframe) {
+    const { isMobile } = this.props;
+    if (!isMobile && !click && this.state.iframe) {
       this.hideIframe();
     } else if (hover) {
       this.handleHover(cel);
@@ -425,16 +426,12 @@ export default class AppMobile extends PureComponent {
 ////////////
 
   render() {
-    const { isMobile, isHorizontal, iframe, url } = this.state;
+    const { isMobile } = this.props;
+    const { isHorizontal, iframe, url } = this.state;
     const appStyle = !isMobile ? null : {
       height: isHorizontal ? '100vh' : '100%',
       justifyContent: isHorizontal ? 'flex-end' : 'center',
-      overflow: 'visible'
-    };
-    const mainStyle = !isMobile ? null : {
-      margin: isHorizontal
-        ? 0
-        : (window.innerHeight - (this.refs.grid || 0).clientHeight) / 3 + 'px 0 0 0'
+      // overflow: 'visible'
     };
     const gridStyle = isMobile ? null : {
       margin: this.celHeight / 3 + 'px 0 0 0'
@@ -443,7 +440,7 @@ export default class AppMobile extends PureComponent {
 
     return (
       <div id="App" style={appStyle}>
-        <div id="main" style={mainStyle}>
+        <div id="main">
           <div ref="grid" className={(iframe && 'esc') || ''} style={gridStyle} />
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
