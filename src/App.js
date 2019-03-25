@@ -55,11 +55,8 @@ export default class AppMobile extends PureComponent {
     if (!this.state.isResizing) {
       clearTimeout(this.introTimeout);
       clearTimeout(this.hoverTimeout);
-      this.setState(prevState => ({ isResizing: true }));
+      this.setState({ isResizing: true, iframe: false });
       this.undrawGrid(this.grid);
-    };
-    if (this.state.iframe) {
-      this.setState(prevState => ({ iframe: false }));
     };
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
@@ -127,13 +124,13 @@ export default class AppMobile extends PureComponent {
       }, isLoaded ? (content[d].t / 4) : content[d].t);
     });
 
-    this.setState(prevState => ({
+    this.setState({
       isHorizontal,
       cols,
       rows,
       isLoaded: true,
       isResizing: false
-    }));
+    });
   };
 
 
@@ -309,7 +306,7 @@ export default class AppMobile extends PureComponent {
   showIframe(iframe) {
     const { url, ratio } = content.projects.hover.data[iframe];
     const { width, height, startCol, startRow } = this.setIframeSize(ratio);
-    this.setState(prevState => ({ iframe, url }));
+    this.setState({ iframe, url });
     this.hideSubset();
 
     const clear = this.grid.filter(d =>
@@ -337,7 +334,7 @@ export default class AppMobile extends PureComponent {
       this.undrawGrid(queue);
       this.drawGrid(queue);
     });
-      this.setState(prevState => ({ iframe: false, url: false }));
+      this.setState({ iframe: false, url: false });
   };
 
 
@@ -429,11 +426,12 @@ export default class AppMobile extends PureComponent {
     const { isMobile } = this.props;
     const { isHorizontal, iframe, url } = this.state;
     const appStyle = !isMobile ? null : {
-      height: isHorizontal ? '100vh' : '100%',
+      // height: isHorizontal ? '100vh' : '100%',
       justifyContent: isHorizontal ? 'flex-end' : 'center',
       // overflow: 'visible'
     };
-    const gridStyle = isMobile ? null : {
+    const gridStyle = !isMobile ? null : {
+      // backgroundColor: 'brown',
       margin: this.celHeight / 3 + 'px 0 0 0'
     };
     const toggleHide = iframe ? 'active ' : 'inactive';

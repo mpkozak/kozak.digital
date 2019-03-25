@@ -7,11 +7,11 @@
   align-items: center;
   justify-content: center;
 
-  background-color: yellow;
+  /*background-color: yellow;*/
 }
 
 #main {
-  position: fixed;
+  position: relative;
   cursor: default;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
