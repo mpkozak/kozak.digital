@@ -21,6 +21,13 @@ export default class AppMobile extends PureComponent {
       links: false,
       contact: false
     };
+    this.gridDom = React.createRef();
+    this.handleGlobal = this.handleGlobal.bind(this);
+    this.lastGlobal = Date.now();
+
+
+
+
     this.layout = {};
     this.celRatio = (2 / 3);
     this.celHeight = 18;
@@ -38,11 +45,41 @@ export default class AppMobile extends PureComponent {
   componentDidMount() {
     if (this.props.isMobile) {
       this.layoutRefreshMobile();
-      this.refs.grid.addEventListener('touchmove', this.handleTouchMove);
+      this.gridDom.current.addEventListener('touchmove', this.handleTouchMove);
       window.addEventListener('resize', this.layoutRefreshMobile);
     } else {
       this.layoutRefresh();
       window.addEventListener('resize', this.layoutRefresh);
+    };
+
+    this.gridDom.current.addEventListener('mousemove', this.handleGlobal);
+    this.gridDom.current.addEventListener('click', this.handleGlobal);
+  };
+
+
+
+  handleGlobal(e) {
+    // const now = Date.now();
+    // console.log('global event')
+    // if (now - this.lastGlobal < 16) {
+    //   return null;
+    // };
+    // this.lastGlobal = now;
+    // console.log('past throttle')
+
+    // console.log(e)
+
+
+    // const i = ;
+    // console.log(i)
+    // const cel = this.grid.find(a => a.id === e.target.id);
+    const cel = this.grid[parseInt(e.target.id.slice(3))];
+    if (!cel) return null;
+    if (e.type === "mousemove") {
+      this.handleHover(cel);
+    };
+    if (e.type === "click") {
+      this.handleClick(cel);
     };
   };
 
@@ -100,7 +137,6 @@ export default class AppMobile extends PureComponent {
     const { celHeight, celWidth } = this;
     const { isMobile } = this.props;
     const { isLoaded } = this.state;
-    const { grid } = this.refs;
     const margin = isMobile ? 0 : -2;
     const cols = Math.floor(window.innerWidth / celWidth) + (margin * 2);
     const rows = Math.floor(window.innerHeight / celHeight) + margin;
@@ -108,8 +144,8 @@ export default class AppMobile extends PureComponent {
     const height = rows * celHeight;
 
     d3.selectAll('text').remove();
-    grid.style.width = width + 'px';
-    grid.style.height = height + 'px';
+    this.gridDom.current.style.width = width + 'px';
+    this.gridDom.current.style.height = height + 'px';
 
     this.drawGrid(this.grid =
       emptyGrid(cols, rows, isLoaded ? false : (isMobile ? 300 : 500))
@@ -140,7 +176,7 @@ export default class AppMobile extends PureComponent {
 
   drawGrid(cels) {
     const { celHeight, celWidth } = this;
-    d3.select(this.refs.grid).selectAll('g').data(cels)
+    d3.select(this.gridDom.current).selectAll('g').data(cels)
       .enter().append('text')
         .text(d => d.text)
         .attr('id', d => d.id)
@@ -155,8 +191,8 @@ export default class AppMobile extends PureComponent {
         .style('font-size', celHeight + 'px')
         .style('text-align', 'center')
         .style('opacity', 0)
-        .on('mouseenter', !this.props.isMobile ? this.handleHover : null)
-        .on('click', this.handleClick)
+        // .on('mouseenter', !this.props.isMobile ? this.handleHover : null)
+        // .on('click', this.handleClick)
       .transition().delay(d => d.delay)
         .style('opacity', 1);
   };
@@ -439,7 +475,7 @@ export default class AppMobile extends PureComponent {
     return (
       <div id="App" style={appStyle}>
         <div id="main">
-          <div ref="grid" className={(iframe && 'esc') || ''} style={gridStyle} />
+          <div ref={this.gridDom} className={(iframe && 'esc') || ''} style={gridStyle} />
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
               <iframe
