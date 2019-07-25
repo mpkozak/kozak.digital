@@ -56,6 +56,10 @@ export default class AppMobile extends PureComponent {
     this.gridDom.current.addEventListener('click', this.handleGlobal);
   };
 
+  componentDidUpdate() {
+    console.log(this.celHeight)
+  }
+
 
 
   handleGlobal(e) {
@@ -74,6 +78,7 @@ export default class AppMobile extends PureComponent {
     // console.log(i)
     // const cel = this.grid.find(a => a.id === e.target.id);
     const cel = this.grid[parseInt(e.target.id.slice(3))];
+
     if (!cel) return null;
     if (e.type === "mousemove") {
       this.handleHover(cel);
@@ -143,7 +148,7 @@ export default class AppMobile extends PureComponent {
     const width = cols * celWidth;
     const height = rows * celHeight;
 
-    d3.selectAll('text').remove();
+    d3.selectAll('p').remove();
     this.gridDom.current.style.width = width + 'px';
     this.gridDom.current.style.height = height + 'px';
 
@@ -176,20 +181,21 @@ export default class AppMobile extends PureComponent {
 
   drawGrid(cels) {
     const { celHeight, celWidth } = this;
-    d3.select(this.gridDom.current).selectAll('g').data(cels)
-      .enter().append('text')
+    d3.select(this.gridDom.current).selectAll('div').data(cels)
+      .enter().append('p')
         .text(d => d.text)
         .attr('id', d => d.id)
         .attr('class', d => d.cl ? d.cl : null)
-        .style('position', 'absolute')
+        // .style('position', 'absolute')
         .style('width', celWidth + 'px')
         .style('height', celHeight + 'px')
         .style('left', d => d.c * celWidth + 'px')
         .style('top', d => d.r * celHeight + 'px')
-        .style('background-color', 'rgba(0, 0, 0, 0)')
-        .style('color', d => d.fill ? d.fill : '#4A4B4D')
-        .style('font-size', celHeight + 'px')
-        .style('text-align', 'center')
+        // .style('background-color', 'rgba(0, 0, 0, 0)')
+        // .style('color', d => d.fill ? d.fill : '#4A4B4D')
+        .style('color', d => d.fill ? d.fill : null)
+        // .style('font-size', celHeight + 'px')
+        // .style('text-align', 'center')
         .style('opacity', 0)
         // .on('mouseenter', !this.props.isMobile ? this.handleHover : null)
         // .on('click', this.handleClick)
@@ -202,13 +208,14 @@ export default class AppMobile extends PureComponent {
       d3.select(`#${d.id}`)
           .attr('class', 'delete')
           .attr('id', null)
-          .on('mouseover', null)
-          .on('click', null)
+          // .on('mouseover', null)
+          // .on('click', null)
         .transition()
           .delay(Math.floor(d.delay / 1.5))
           .style('opacity', 0)
           .remove();
     });
+    // this.drawGrid(this.grid)
   };
 
   letterSwap(cel) {
@@ -466,16 +473,22 @@ export default class AppMobile extends PureComponent {
       justifyContent: isHorizontal ? 'flex-end' : 'center',
       // overflow: 'visible'
     };
-    const gridStyle = !isMobile ? null : {
-      // backgroundColor: 'brown',
-      margin: this.celHeight / 3 + 'px 0 0 0'
-    };
+    const gridStyle = isMobile
+      ? {
+          margin: this.celHeight / 3 + 'px 0 0 0',
+        }
+      : {
+          fontSize: this.celHeight + 'px',
+        };
+
+
     const toggleHide = iframe ? 'active ' : 'inactive';
+    // console.log('render', gridStyle)
 
     return (
       <div id="App" style={appStyle}>
         <div id="main">
-          <div ref={this.gridDom} className={(iframe && 'esc') || ''} style={gridStyle} />
+          <div id="grid" ref={this.gridDom} className={(iframe && 'esc') || ''} style={gridStyle} />
           {!isMobile &&
             <div id="container" className={toggleHide} style={this.containerStyle}>
               <iframe
