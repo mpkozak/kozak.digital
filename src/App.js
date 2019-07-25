@@ -52,23 +52,23 @@ export default class AppMobile extends PureComponent {
       window.addEventListener('resize', this.layoutRefresh);
     };
 
-    this.gridDom.current.addEventListener('mousemove', this.handleGlobal);
+    this.gridDom.current.addEventListener('mousemove', this.handleGlobal, { passive: true  });
     this.gridDom.current.addEventListener('click', this.handleGlobal);
   };
 
   componentDidUpdate() {
-    console.log(this.celHeight)
+    // console.log(this.celHeight)
   }
 
 
 
   handleGlobal(e) {
-    // const now = Date.now();
+    const now = Date.now();
     // console.log('global event')
-    // if (now - this.lastGlobal < 16) {
-    //   return null;
-    // };
-    // this.lastGlobal = now;
+    if (now - this.lastGlobal < 16) {
+      return null;
+    };
+    this.lastGlobal = now;
     // console.log('past throttle')
 
     // console.log(e)
@@ -80,6 +80,7 @@ export default class AppMobile extends PureComponent {
     const cel = this.grid[parseInt(e.target.id.slice(3))];
 
     if (!cel) return null;
+    // console.log(cel)
     if (e.type === "mousemove") {
       this.handleHover(cel);
     };
@@ -181,7 +182,9 @@ export default class AppMobile extends PureComponent {
 
   drawGrid(cels) {
     const { celHeight, celWidth } = this;
-    d3.select(this.gridDom.current).selectAll('div').data(cels)
+    const cel = d3.select(this.gridDom.current).selectAll('div').data(cels)
+
+    cel
       .enter().append('p')
         .text(d => d.text)
         .attr('id', d => d.id)
@@ -200,7 +203,14 @@ export default class AppMobile extends PureComponent {
         // .on('mouseenter', !this.props.isMobile ? this.handleHover : null)
         // .on('click', this.handleClick)
       .transition().delay(d => d.delay)
-        .style('opacity', 1);
+        .style('opacity', 1)
+
+    // d3.select(this.gridDom.current).selectAll('p')
+    // cel
+      // .exit()
+      //   .delay(d => Math.floor(d.delay / 1.5))
+      //   .style('opacity', 0)
+      //   .remove();
   };
 
   undrawGrid(cels) {
@@ -220,6 +230,8 @@ export default class AppMobile extends PureComponent {
 
   letterSwap(cel) {
     cel.text = randomLetter();
+    // this.drawGrid(this.grid)
+
     d3.select(`#${cel.id}`)
       .transition()
         .style('opacity', 0)
