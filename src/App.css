@@ -10,6 +10,16 @@
   /*background-color: yellow;*/
 }
 
+
+p {
+  position: absolute;
+  font-size: inherit;
+  color: #4A4B4D;
+  text-align: center;
+  background-color: rgba(0,0,0,0);
+}
+
+
 #main {
   position: relative;
   cursor: default;
