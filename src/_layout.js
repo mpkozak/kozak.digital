@@ -1,7 +1,7 @@
-const layout = {};
+const layouts = {};
 
 
-layout.main = {
+layouts.desktop = {
   title: {
     posX: .5,
     posY: .5
@@ -45,13 +45,13 @@ layout.main = {
 };
 
 
-layout.mobileV = {
+layouts.mobileV = {
   title: {
     posX: .5,
     posY: .5
   },
   name: {
-    posX: .75,
+    posX: .72,
     posY: .6
   },
   skills: {
@@ -89,7 +89,7 @@ layout.mobileV = {
 };
 
 
-layout.mobileH = {
+layouts.mobileH = {
   title: {
     posX: .5,
     posY: .75
@@ -134,4 +134,4 @@ layout.mobileH = {
 
 
 
-module.exports = layout;
+module.exports = layouts;

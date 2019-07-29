@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { d3 } from './_d3.js'
 import './App2.css';
 // import { randomLetter, emptyGrid } from './_help.js';
+import layouts from './_layout.js';
 
 
 
@@ -33,99 +34,38 @@ const content = {
     delay: 1000,
     onHover: false,
     color: '#FFFFFF',
-      posX: .5,
-      posY: .5
   },
   name: {
     str: 'm. parker kozak',
     delay: 2000,
     onHover: false,
     color: '#D24141',
-      posX: .75,
-      posY: .6
   },
   skills: {
     str: 'skills',
     delay: 2500,
     onHover: true,
     color: '#FFAF24',
-      posX: .7,
-      posY: .4,
   },
   projects: {
     str: 'projects',
     delay: 2750,
     onHover: true,
     color: '#FFAF24',
-      posX: .22,
-      posY: .18,
   },
   contact: {
     str: 'contact',
     delay: 3000,
     onHover: true,
     color: '#FFAF24',
-      posX: .85,
-      posY: .75,
   },
   links: {
     str: 'links',
     delay: 3250,
     onHover: true,
     color: '#FFAF24',
-      posX: .15,
-      posY: .9,
   },
 }
-
-
-const layouts = {
-  // desktop: {
-  //   title: {
-  //     posX: .5,
-  //     posY: .5
-  //   },
-  //   name: {
-  //     posX: .75,
-  //     posY: .6
-  //   },
-  //   skills: {
-  //     posX: .7,
-  //     posY: .4,
-  //     offsetX: 0,
-  //     offsetY: -2,
-  //     deltaX: .3,
-  //     deltaY: -1
-  //   },
-  //   projects: {
-  //     posX: .22,
-  //     posY: .18,
-  //     offsetX: 0,
-  //     offsetY: 3,
-  //     deltaX: .5,
-  //     deltaY: 2
-  //   },
-  //   contact: {
-  //     posX: .85,
-  //     posY: .75,
-  //     offsetX: -16,
-  //     offsetY: 2,
-  //     deltaX: 0,
-  //     deltaY: 1
-  //   },
-  //   links: {
-  //     posX: .15,
-  //     posY: .9,
-  //     offsetX: 2,
-  //     offsetY: -2,
-  //     deltaX: .75,
-  //     deltaY: -2
-  //   }
-  // },
-
-
-
-};
 
 
 
@@ -161,6 +101,8 @@ export default class App extends PureComponent {
     this.main = React.createRef();
     this.grid = React.createRef();
     this.gridText = [];
+
+    this.content = {};
 
 
     this.resizeTimeout = undefined;
@@ -219,17 +161,14 @@ export default class App extends PureComponent {
       .then(grid => {
         Object.assign(params, grid);
         return this.makeEmptyGrid(params);
-        // this.setState({ params }, this.makeGrid);
       })
       .then(gridText => {
         this.gridText = gridText;
         this.setState({ params }, () => {
-          this.drawGrid(this.gridText, params);
+          this.populateGrid();
+          // this.drawGrid(this.gridText);
         });
-        // console.log('text', gridText)
-
-        // return
-      })
+      });
   };
 
 
@@ -239,6 +178,14 @@ export default class App extends PureComponent {
       : gridWidth > gridHeight
         ? 'mobileH'
         : 'mobileV';
+
+    this.content = content;
+    for (let key in this.content) {
+      this.content[key] = {
+        ...content[key],
+        ...layouts[layout][key],
+      };
+    };
 
     return layout;
   };
@@ -317,9 +264,11 @@ export default class App extends PureComponent {
 
 
   populateGrid() {
-    Object.values(content).forEach(d => {
-      setTimeout(() => this.customDraw(d), d.delay - this.drawDelay)
+
+    Object.values(this.content).forEach(d => {
+      this.customDraw(d)
     })
+    this.drawGrid(this.gridText)
   }
 
 
@@ -330,13 +279,28 @@ export default class App extends PureComponent {
 
   async drawGrid(cels) {
     const { celWidth, celHeight, cols, rows } = this.state.params;
-    // console.log('draw grid ran', celWidth, celHeight, cols, rows)
-    const delayScale = 1 / (2 * rows + cols);
-    const delay = this.drawDelay * delayScale;
+
+    // const delayScale = 1 / (2 * rows + cols);
+    // const delay = this.drawDelay * delayScale;
 
     const grid = d3.select(this.grid.current);
     grid.selectAll('div').remove();
     this.grid.current.style.opacity = 1;
+
+
+    const delay = this.props.isMobile ? 300 : 500;
+    const tScalar = 250 / (cols * rows);
+    const dScale = (delay / 5);
+    const calcDelay = d => {
+      // return Math.floor(
+      //   dScale * (
+      //     tScalar * (
+      //       (2 * d.r) + d.c
+      //     ) + Math.random()
+      //   )
+      // );
+      return Math.floor(1000 * Math.random())
+    };
 
     grid.selectAll('div').data(cels)
       .enter().append('div')
@@ -346,30 +310,30 @@ export default class App extends PureComponent {
         .style('top', d => d.r * celHeight + 'px')
         .style('width', celWidth + 'px')
         .style('height', celHeight + 'px')
+        .style('color', d => d.color ? d.color : null)
         .style('opacity', 0)
       .transition()
-        .delay(d => delay * ((2 * d.r + d.c) * Math.random()))
+        .delay(d => calcDelay(d))
+        // .delay(d => Math.floor(delay * ((2 * d.r + d.c) * Math.random())))
         .style('opacity', 1)
         .on('end', (d, i) => {
           if (i < cels.length - 1) return null;
-          // console.log('past', i)
-          this.populateGrid();
+          // this.populateGrid();
         })
   };
 
 
   drawGridCustom(cels) {
     cels.forEach((d, i) => {
-      // console.log(this.gridText.find(a => a.id === d.id), d)
       d3.select(`#${d.id}`)
         .transition()
-          .delay(i * 50 * Math.random())
+          .delay((d.delay - 1000) + i * 50 * Math.random())
           .style('opacity', 0)
           .style('color', d.color)
         .transition()
           .text(d.text)
           .style('opacity', 1);
-      })
+      });
   };
 
 
@@ -399,11 +363,12 @@ export default class App extends PureComponent {
           color: content.color,
           onHover: content.onHover,
           static: true,
+          delay: content.delay
         }))
       }
     })
 
-    this.drawGridCustom(queue);
+    // this.drawGridCustom(queue);
   };
 
 
@@ -530,7 +495,7 @@ export default class App extends PureComponent {
 
 
 
-      // console.log('hover', cel)
+      console.log('hover', cel)
     };
   };
 

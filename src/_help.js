@@ -22,3 +22,25 @@ export const emptyGrid = (cols, rows, delay) => {
   };
   return grid;
 };
+
+
+
+// const delay = isLoaded ? false : (isMobile ? 300 : 500)
+
+
+// delay === (isMobile ? 300 : 500)
+
+  // const tScalar = 250 / (cols * rows);
+  // const dScale = (delay / 5);
+  // Math.floor(
+  //   dScale * (
+  //     tScalar * (
+  //       (2 * r) + c
+  //     ) + Math.random()
+  //   )
+  // )
+
+// delay === false
+  // Math.floor(1000 * Math.random())
+
+
