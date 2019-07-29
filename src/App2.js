@@ -80,49 +80,48 @@ const content = {
 
 
 const layouts = {
-  desktop: {
-    title: {
-      posX: .5,
-      posY: .5
-    },
-    name: {
-      posX: .75,
-      posY: .6
-    },
-    skills: {
-      posX: .7,
-      posY: .4,
-      offsetX: 0,
-      offsetY: -2,
-      deltaX: .3,
-      deltaY: -1
-    },
-    projects: {
-      posX: .22,
-      posY: .18,
-      offsetX: 0,
-      offsetY: 3,
-      deltaX: .5,
-      deltaY: 2
-    },
-    contact: {
-      posX: .85,
-      posY: .75,
-      offsetX: -16,
-      offsetY: 2,
-      deltaX: 0,
-      deltaY: 1
-    },
-    links: {
-      posX: .15,
-      posY: .9,
-      offsetX: 2,
-      offsetY: -2,
-      deltaX: .75,
-      deltaY: -2
-    }
-  },
-
+  // desktop: {
+  //   title: {
+  //     posX: .5,
+  //     posY: .5
+  //   },
+  //   name: {
+  //     posX: .75,
+  //     posY: .6
+  //   },
+  //   skills: {
+  //     posX: .7,
+  //     posY: .4,
+  //     offsetX: 0,
+  //     offsetY: -2,
+  //     deltaX: .3,
+  //     deltaY: -1
+  //   },
+  //   projects: {
+  //     posX: .22,
+  //     posY: .18,
+  //     offsetX: 0,
+  //     offsetY: 3,
+  //     deltaX: .5,
+  //     deltaY: 2
+  //   },
+  //   contact: {
+  //     posX: .85,
+  //     posY: .75,
+  //     offsetX: -16,
+  //     offsetY: 2,
+  //     deltaX: 0,
+  //     deltaY: 1
+  //   },
+  //   links: {
+  //     posX: .15,
+  //     posY: .9,
+  //     offsetX: 2,
+  //     offsetY: -2,
+  //     deltaX: .75,
+  //     deltaY: -2
+  //   }
+  // },
 
 
 
@@ -133,18 +132,21 @@ const layouts = {
 
 
 
-
-
-
 export default class App extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      layout: undefined,
-      celWidth: 12,
-      celHeight: 18,
-      cols: 0,
-      rows: 0,
+      params: {
+        gridWidth: 0,
+        gridHeight: 0,
+        layout: undefined,
+        celWidth: 0,
+        celHeight: 0,
+        cols: 0,
+        rows: 0,
+        marginX: 0,
+        marginY:0,
+      },
     };
 
     this.minGrid = {
@@ -166,10 +168,10 @@ export default class App extends PureComponent {
     this.lastHoverEvent = Date.now();
 
 
-
+    this.config = this.config.bind(this);
     this.configCels = this.configCels.bind(this);
     this.configGrid = this.configGrid.bind(this);
-    this.makeGrid = this.makeGrid.bind(this);
+    // this.makeGrid = this.makeGrid.bind(this);
 
     this.handleResize = this.handleResize.bind(this);
     this.handleMouse = this.handleMouse.bind(this);
@@ -182,16 +184,14 @@ export default class App extends PureComponent {
     window.addEventListener('resize', this.handleResize);
     if (this.props.isMobile) {
       window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-    }
+    };
 
-    this.configLayout();
+    // this.configLayout();
+    this.config();
   };
 
   componentDidUpdate() {
-    // console.log('update', this.state)
-    // const { celWidth, celHeight } = this.state;
-    // console.log('w:', celWidth, 'h:', celHeight);/
-    // this.drawCels(this.gridText)
+
   };
 
 
@@ -200,78 +200,117 @@ export default class App extends PureComponent {
 // ** Layout Configuration ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-  configLayout(w, h) {
-    const layout = !this.props.isMobile
-      ? 'desktop'
-      : w > h
-        ? 'mobileH'
-        : 'mobileV';
+  async config() {
+    const { clientWidth, clientHeight } = this.grid.current;
+    const params = {
+      gridWidth: clientWidth,
+      gridHeight: clientHeight,
+    };
 
+    this.configLayout(params)
+      .then(layout => {
+        params.layout = layout;
+        return this.configCels(params);
+      })
+      .then(cels => {
+        Object.assign(params, cels);
+        return this.configGrid(params);
+      })
+      .then(grid => {
+        Object.assign(params, grid);
+        return this.makeEmptyGrid(params);
+        // this.setState({ params }, this.makeGrid);
+      })
+      .then(gridText => {
+        this.gridText = gridText;
+        this.setState({ params }, () => {
+          this.drawGrid(this.gridText, params);
+        });
+        // console.log('text', gridText)
 
-
-
-
-    this.setState({ layout }, this.configCels);
+        // return
+      })
   };
 
 
-  configCels() {
-    const { clientWidth, clientHeight } = this.grid.current;
-    const [minCols, minRows] = this.minGrid[this.state.layout];
+  async configLayout({ gridWidth, gridHeight }) {
+    const layout = !this.props.isMobile
+      ? 'desktop'
+      : gridWidth > gridHeight
+        ? 'mobileH'
+        : 'mobileV';
 
-    const w = clientWidth / minCols;
-    const h = clientHeight / minRows;
-    let celWidth = h * this.celRatio;
-    let celHeight = w / this.celRatio;
+    return layout;
+  };
 
-    if (clientHeight / celHeight < minRows) {
+
+  async configCels({ gridWidth, gridHeight, layout }) {
+    const { celRatio, maxCelHeight } = this;
+    const [minCols, minRows] = this.minGrid[layout];
+
+    const w = gridWidth / minCols;
+    const h = gridHeight / minRows;
+    let celWidth = h * celRatio;
+    let celHeight = w / celRatio;
+
+    if (gridHeight / celHeight < minRows) {
       celHeight = h;
     } else {
       celWidth = w;
     };
 
-    if (celHeight > this.maxCelHeight) {
-      celHeight = this.maxCelHeight;
-      celWidth = this.maxCelHeight * this.celRatio;
+    if (celHeight > maxCelHeight) {
+      celHeight = maxCelHeight;
+      celWidth = maxCelHeight * celRatio;
     };
 
-    this.configGrid(clientWidth, clientHeight, celWidth, celHeight);
+    return { celWidth, celHeight };
   };
 
 
-  configGrid(clientWidth, clientHeight, celWidth, celHeight) {
-    const cols = Math.floor(clientWidth / celWidth);
-    const rows = Math.floor(clientHeight / celHeight);
+  async configGrid({ gridWidth, gridHeight, celWidth, celHeight }) {
+    const cols = Math.floor(gridWidth / celWidth);
+    const rows = Math.floor(gridHeight / celHeight);
 
-    const marginX = (clientWidth - cols * celWidth) / 2;
-    const marginY = (clientHeight - rows * celHeight) / 2;
-    // this.grid.current.style.marginLeft = marginX + 'px';
-    // this.grid.current.style.marginTop = marginY + 'px';
-    this.main.current.style.paddingLeft = marginX + 'px';
-    this.main.current.style.paddingTop = marginY + 'px';
+    const marginX = (gridWidth - cols * celWidth) / 2;
+    const marginY = (gridHeight - rows * celHeight) / 2;
 
-    this.setState({
-      celWidth,
-      celHeight,
-      cols,
-      rows,
-    }, this.makeGrid);
-
+    return { cols, rows, marginX, marginY };
   };
 
 
-  makeGrid() {
-    const { cols, rows } = this.state;
-    this.gridText = emptyGrid(cols, rows);
-
-
-
-
-    this.drawGrid(this.gridText);
-    setTimeout(() => this.populateGrid(), this.drawDelay);
-
-    // setTimeout(() => this.customDraw(content.title), 2000);
+  async makeEmptyGrid({ cols, rows }) {
+    const grid = [];
+    let id = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        grid.push({
+          c,
+          r,
+          id: `cel${id++}`,
+          text: randomLetter(),
+        });
+      };
+    };
+    return grid;
   };
+
+
+
+
+  // makeGrid() {
+  //   const { cols, rows, marginX, marginY } = this.state.params;
+
+  //   this.main.current.style.paddingLeft = marginX + 'px';
+  //   this.main.current.style.paddingTop = marginY + 'px';
+
+  //   this.gridText = emptyGrid(cols, rows);
+
+  //   this.drawGrid(this.gridText);
+  //   setTimeout(() => this.populateGrid(), this.drawDelay);
+
+  //   // setTimeout(() => this.customDraw(content.title), 2000);
+  // };
 
 
 
@@ -281,7 +320,6 @@ export default class App extends PureComponent {
     Object.values(content).forEach(d => {
       setTimeout(() => this.customDraw(d), d.delay - this.drawDelay)
     })
-
   }
 
 
@@ -290,8 +328,9 @@ export default class App extends PureComponent {
 // ** D3 Draw Functions ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-  drawGrid(cels) {
-    const { celWidth, celHeight, cols, rows } = this.state;
+  async drawGrid(cels) {
+    const { celWidth, celHeight, cols, rows } = this.state.params;
+    // console.log('draw grid ran', celWidth, celHeight, cols, rows)
     const delayScale = 1 / (2 * rows + cols);
     const delay = this.drawDelay * delayScale;
 
@@ -310,7 +349,12 @@ export default class App extends PureComponent {
         .style('opacity', 0)
       .transition()
         .delay(d => delay * ((2 * d.r + d.c) * Math.random()))
-        .style('opacity', 1);
+        .style('opacity', 1)
+        .on('end', (d, i) => {
+          if (i < cels.length - 1) return null;
+          // console.log('past', i)
+          this.populateGrid();
+        })
   };
 
 
@@ -341,11 +385,10 @@ export default class App extends PureComponent {
 
 
   customDraw(content) {
-    const { cols, rows } = this.state;
+    const { cols, rows } = this.state.params;
 
     let c = Math.round(content.posX * cols - content.str.length / 2);
     let r = Math.round(content.posY * rows);
-
 
     const queue = [];
     content.str.split('').forEach((d, i) => {
@@ -360,10 +403,8 @@ export default class App extends PureComponent {
       }
     })
 
-    this.drawGridCustom(queue)
-
-
-  }
+    this.drawGridCustom(queue);
+  };
 
 
 
@@ -435,7 +476,7 @@ export default class App extends PureComponent {
 
 
     // this.undrawGrid();
-    this.resizeTimeout = setTimeout(this.configCels, 500);
+    this.resizeTimeout = setTimeout(this.config, 500);
     // this.configCels();
   };
 
@@ -473,6 +514,7 @@ export default class App extends PureComponent {
 
 
 
+
   handleClick(cel) {
     console.log(cel)
   };
@@ -485,7 +527,10 @@ export default class App extends PureComponent {
       const now = Date.now();
       if (now - this.lastHoverEvent < 1000) return null;
       this.lastHoverEvent = now;
-      console.log('hover', cel)
+
+
+
+      // console.log('hover', cel)
     };
   };
 
@@ -493,9 +538,9 @@ export default class App extends PureComponent {
 
 
   render() {
-    const { isMobile } = this.props;
+    // const { isMobile } = this.props;
 
-    const { celHeight } = this.state;
+    const { celHeight } = this.state.params;
 
     const gridStyle = {
       fontSize: celHeight,
@@ -507,7 +552,6 @@ export default class App extends PureComponent {
           ref={this.main}
           onMouseMove={this.handleMouse}
           onClick={this.handleMouse}
-          // onTouchMove={isMobile ? this.handleTouchMove : null}
         >
           <div id="Grid" ref={this.grid} style={gridStyle} />
         </div>
