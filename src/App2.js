@@ -9,23 +9,6 @@ import layouts from './_layout.js';
 const alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
 const randomLetter = () => alpha[Math.floor(Math.random() * 26)];
 
-const emptyGrid = (cols, rows) => {
-  const grid = [];
-  let id = 0;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      grid.push({
-        c,
-        r,
-        id: `cel${id++}`,
-        text: randomLetter(),
-      });
-    };
-  };
-  return grid;
-};
-
-
 
 
 const content = {
@@ -65,7 +48,7 @@ const content = {
     onHover: true,
     color: '#FFAF24',
   },
-}
+};
 
 
 
@@ -76,6 +59,7 @@ export default class App extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
+      isLoaded: false,
       params: {
         gridWidth: 0,
         gridHeight: 0,
@@ -127,8 +111,6 @@ export default class App extends PureComponent {
     if (this.props.isMobile) {
       window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
     };
-
-    // this.configLayout();
     this.config();
   };
 
@@ -263,13 +245,21 @@ export default class App extends PureComponent {
 
 
 
-  populateGrid() {
-
-    Object.values(this.content).forEach(d => {
-      this.customDraw(d)
-    })
-    this.drawGrid(this.gridText)
-  }
+  async populateGrid() {
+    const content = Object.values(this.content);
+    if (!this.state.isLoaded) {
+      return this.drawGrid()
+        .then(done => Promise.all(
+          content.map(d => this.customDraw(d))
+        ))
+        .then(cels => Promise.all(
+          cels.map(d => this.drawGridCustom(d))
+        ))
+        .then(done => this.setState({ isLoaded: true}))
+    };
+    Promise.all(content.map(d => this.customDraw(d)))
+      .then(done => this.drawGrid())
+  };
 
 
 
@@ -277,54 +267,54 @@ export default class App extends PureComponent {
 // ** D3 Draw Functions ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-  async drawGrid(cels) {
-    const { celWidth, celHeight, cols, rows } = this.state.params;
-
-    // const delayScale = 1 / (2 * rows + cols);
-    // const delay = this.drawDelay * delayScale;
+  async drawGrid() {
+    const { isLoaded, params } = this.state;
+    const { celWidth, celHeight, cols, rows } = params;
+    const cels = this.gridText;
 
     const grid = d3.select(this.grid.current);
     grid.selectAll('div').remove();
     this.grid.current.style.opacity = 1;
 
-
-    const delay = this.props.isMobile ? 300 : 500;
-    const tScalar = 250 / (cols * rows);
-    const dScale = (delay / 5);
     const calcDelay = d => {
-      // return Math.floor(
-      //   dScale * (
-      //     tScalar * (
-      //       (2 * d.r) + d.c
-      //     ) + Math.random()
-      //   )
-      // );
-      return Math.floor(1000 * Math.random())
+      if (isLoaded) return Math.floor(500 * Math.random());
+      const delay = this.props.isMobile ? 300 : 500;
+      const tScalar = 250 / (cols * rows);
+      const dScale = (delay / 5);
+      return Math.floor(
+        dScale * (
+          tScalar * (
+            (2 * d.r) + d.c
+          ) + Math.random()
+        )
+      );
     };
 
-    grid.selectAll('div').data(cels)
-      .enter().append('div')
-        .text(d => d.text)
-        .attr('id', d => d.id)
-        .style('left', d => d.c * celWidth + 'px')
-        .style('top', d => d.r * celHeight + 'px')
-        .style('width', celWidth + 'px')
-        .style('height', celHeight + 'px')
-        .style('color', d => d.color ? d.color : null)
-        .style('opacity', 0)
-      .transition()
-        .delay(d => calcDelay(d))
-        // .delay(d => Math.floor(delay * ((2 * d.r + d.c) * Math.random())))
-        .style('opacity', 1)
-        .on('end', (d, i) => {
-          if (i < cels.length - 1) return null;
-          // this.populateGrid();
-        })
+    return new Promise((res, rej) =>
+      grid.selectAll('div').data(cels)
+        .enter().append('div')
+          .text(d => d.text)
+          .attr('id', d => d.id)
+          .style('left', d => d.c * celWidth + 'px')
+          .style('top', d => d.r * celHeight + 'px')
+          .style('width', celWidth + 'px')
+          .style('height', celHeight + 'px')
+          .style('color', d => d.color ? d.color : null)
+          .style('opacity', 0)
+        .transition()
+          .delay(d => calcDelay(d))
+          .style('opacity', 1)
+          .on('end', (d, i) => {
+            if (i < cels.length - 1) return null;
+            res();
+          })
+    );
   };
 
 
-  drawGridCustom(cels) {
-    cels.forEach((d, i) => {
+  async drawGridCustom(cels) {
+    return new Promise((res, rej) =>
+      cels.forEach((d, i) => {
       d3.select(`#${d.id}`)
         .transition()
           .delay((d.delay - 1000) + i * 50 * Math.random())
@@ -332,8 +322,10 @@ export default class App extends PureComponent {
           .style('color', d.color)
         .transition()
           .text(d.text)
-          .style('opacity', 1);
-      });
+          .style('opacity', 1)
+          .on('end', () => res());
+      })
+    );
   };
 
 
@@ -348,7 +340,7 @@ export default class App extends PureComponent {
   };
 
 
-  customDraw(content) {
+  async customDraw(content) {
     const { cols, rows } = this.state.params;
 
     let c = Math.round(content.posX * cols - content.str.length / 2);
@@ -365,10 +357,9 @@ export default class App extends PureComponent {
           static: true,
           delay: content.delay
         }))
-      }
-    })
-
-    // this.drawGridCustom(queue);
+      };
+    });
+    return queue;
   };
 
 
