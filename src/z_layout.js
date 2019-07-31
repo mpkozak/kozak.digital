@@ -1,6 +1,7 @@
 const layouts = {};
 
 
+
 layouts.desktop = {
   title: {
     posX: .5,
@@ -131,6 +132,8 @@ layouts.mobileH = {
     deltaY: -2
   }
 };
+
+
 
 
 
