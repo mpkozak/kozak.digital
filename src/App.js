@@ -48,11 +48,7 @@ export default class App extends PureComponent {
       mobileV: [31, 30],
     };
 
-
-    this.main = React.createRef();
     this.grid = React.createRef();
-
-
 
     this.config = this.config.bind(this);
     this.undrawGridFull = this.undrawGridFull.bind(this);
@@ -96,6 +92,8 @@ export default class App extends PureComponent {
   componentDidUpdate() {
 
   };
+
+
 
 
 
@@ -226,6 +224,41 @@ export default class App extends PureComponent {
   };
 
 
+  async addGridTextDynamic(content) {
+    const { data, posX, posY, offsetX, offsetY, deltaX, deltaY } = content;
+    const { cols, rows } = this.state.params;
+
+    const baseR = Math.round((posY * rows) + offsetY);
+    const baseC = Math.round((posX * cols) + offsetX);
+
+
+    const out = data.map((d, i) => {
+      const r = baseR + (deltaY * i);
+      let c = Math.round(baseC + (deltaX * i) + (2 * Math.random() - 1));
+
+      const queue = [];
+      d.str.split('').forEach(char => {
+        const cel = this.gridText[cols * r + c++];
+        if (char === ' ') return null;
+        queue.push(Object.assign(cel, {
+          text: char,
+          color: d.color,
+          // onHover: onHover,
+          static: true,
+          delay: 0,
+        }));
+      });
+      return queue;
+
+    }).flat();
+
+
+    console.log('out', out)
+
+    return out
+
+  }
+
 
 
 
@@ -282,10 +315,10 @@ export default class App extends PureComponent {
 
     const grid = d3.select(this.grid.current);
     grid.selectAll('div').remove();
-    this.grid.current.style.opacity = 1;
 
     return new Promise((res, rej) =>
-      grid.selectAll('div').data(this.gridText)
+      // grid.selectAll('div').data(this.gridText)
+      grid.selectAll('div').data(this.gridText, d => d.id)
         .enter().append('div')
           .text(d => d.text)
           .attr('id', d => d.id)
@@ -306,29 +339,44 @@ export default class App extends PureComponent {
   };
 
 
-
-
-
-
   async drawGridCustom(cels) {
-    return new Promise((res, rej) =>
-      cels.forEach((d, i, a) => {
-        d3.select(`#${d.id}`)
+    return new Promise((res, rej) => {
+      d3.select(this.grid.current)
+        .selectAll('div').data(cels, d => d.id)
           .transition()
-            .delay((d.delay - 1000) + i * 50 * Math.random())
+            .duration(100)
+            // .delay((d, i) => d.delay + i * 50 * Math.random())
             .style('opacity', 0)
-            .style('color', d.color)
           .transition()
-            .text(d.text)
+            .duration(100)
+            .text(d => d.text)
+            .style('color', d => d.color)
             .style('opacity', 1)
-            // .on('end', () => res());
-            .on('end', () => {
-              // if (i < a.length - 1) return null;
+            .on('end', (d, i, a) => {
+              if (i < a.length - 1) return null;
               res();
             });
-      })
-    );
+    });
+
+    // return new Promise((res, rej) =>
+    //   cels.forEach((d, i, a) => {
+    //     d3.select(`#${d.id}`)
+    //       .transition()
+    //         .delay(d.delay + i * 50 * Math.random())
+    //         .style('opacity', 0)
+    //         .style('color', d.color)
+    //       .transition()
+    //         .text(d.text)
+    //         .style('opacity', 1)
+    //         // .on('end', () => res());
+    //         .on('end', () => {
+    //           // if (i < a.length - 1) return null;
+    //           res();
+    //         });
+    //   })
+    // );
   };
+
 
   undrawGridFull() {
     d3.select(this.grid.current).selectAll('div')
@@ -339,12 +387,7 @@ export default class App extends PureComponent {
   };
 
 
-
-
-
-
-
-  letterSwap(cel) {
+  drawGridLetterSwap(cel) {
     cel.text = randomLetter();
     d3.select(`#${cel.id}`)
       .transition()
@@ -464,15 +507,16 @@ export default class App extends PureComponent {
 
   handleHover(cel) {
     if (!cel.static) {
-      this.letterSwap(cel);
+      this.drawGridLetterSwap(cel);
     } else if (cel.onHover) {
       const now = Date.now();
       if (now - this.lastHoverEvent < 1000) return null;
       this.lastHoverEvent = now;
 
 
-
-      console.log('hover', cel)
+      this.addGridTextDynamic(this.content[cel.onHover])
+        .then(queue => this.drawGridCustom(queue))
+      // console.log('hover', cel)
     };
   };
 
@@ -480,18 +524,17 @@ export default class App extends PureComponent {
 
 
   render() {
-    // const { isMobile } = this.props;
-
-    const { celHeight } = this.state.params;
+    const { celHeight, marginX, marginY } = this.state.params;
 
     const gridStyle = {
       fontSize: celHeight,
+      marginLeft: marginX,
+      marginTop: marginY,
     };
 
     return (
       <div id="App">
         <div id="Main"
-          ref={this.main}
           onMouseMove={this.handleMouse}
           onClick={this.handleMouse}
         >
