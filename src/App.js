@@ -56,12 +56,10 @@ export default class App extends PureComponent {
 
 
     this.resizeTimeout = undefined;
-
     this.handleResize = this.handleResize.bind(this);
 
 
     this.lastMouseEvent = Date.now();
-    this.lastHoverEvent = Date.now();
 
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleMouse = this.handleMouse.bind(this);
@@ -116,7 +114,7 @@ export default class App extends PureComponent {
         this.configGridSize(Object.assign(params, celSize))
       )
       .then(gridSize =>
-        this.populateGridText(Object.assign(params, gridSize))
+        this.addGridTextInitial(Object.assign(params, gridSize))
       )
       .then(gridText => {
         this.gridText = gridText;
@@ -190,7 +188,7 @@ export default class App extends PureComponent {
 // ** Layout Configuration ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-  async populateGridText({ cols, rows }) {
+  async addGridTextInitial({ cols, rows }) {
     const grid = [];
     let id = 0;
     for (let r = 0; r < rows; r++) {
@@ -223,7 +221,8 @@ export default class App extends PureComponent {
         color: color,
         onHover: onHover,
         static: true,
-        delay: delay + Math.floor((i / str.length) * 250 * Math.random()),
+        // delay: delay + Math.floor((i / str.length) * 250 * Math.random()),
+        delay: delay + Math.floor((i / str.length) * 50 + 200 * Math.random()),
       }));
     });
 
@@ -253,7 +252,9 @@ export default class App extends PureComponent {
           color: d.color,
           cl: cl,
           static: true,
-          delay: Math.floor((queue.length / total) * 500 * Math.random()),
+          // delay: Math.floor((queue.length / total) * 500 * Math.random()),
+          // delay: Math.floor((queue.length / total) * 250 + 250 * Math.random()),
+          delay: Math.floor(((queue.length / total) + Math.random()) * 250),
         }));
       });
     });
@@ -267,13 +268,16 @@ export default class App extends PureComponent {
     return Promise.all(
       cels.map((d, i, a) => {
         d.text = randomLetter();
-        d.delay = Math.floor(((a.length - i) / a.length) * 500 * Math.random());
+        // d.delay = Math.floor(((a.length - i) / a.length) * 500 * Math.random());
+        // d.delay = Math.floor(((a.length - i) / a.length) * 250 + 250 * Math.random());
+        d.delay = Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
         delete d.cl;
         delete d.color;
         return d;
       })
     );
   };
+
 
 
 
@@ -351,7 +355,6 @@ export default class App extends PureComponent {
           .style('opacity', 1)
           .on('end', (d, i, a) => {
             if (i < a.length - 1) return null;
-            console.log('drawn')
             res();
           })
     );
@@ -404,15 +407,9 @@ export default class App extends PureComponent {
             .remove()
             .on('end', () => {
               if (++i < this.gridText.length) return null;
-              console.log('undrawn')
               res(true);
-              // clearTimeout(this.rejTimeout);
             });
-
-
-
-
-    })
+    });
   };
 
 
@@ -450,31 +447,56 @@ export default class App extends PureComponent {
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+// ** Event Handler Helpers ** //
+////////////////////////////////////////////////////////////////////////////////
+
+  helpRedraw() {
+    return setTimeout(() => {
+      this.setState({ isResizing: false, isClear: false }, () => {
+        this.config();
+      });
+    }, 400);
+  };
+
+
+  helpCombinedHover(cel) {
+    const cl = cel.onHover;
+
+    if (!cel.static) {
+      this.drawGridLetterSwap(cel);
+    } else if (cl) {
+      this.helpToggleDynamicText(cl);
+    };
+  };
+
+
+  helpToggleDynamicText(cl) {
+    const active = this.state[cl];
+    const now = Date.now();
+
+    if (!active) {
+      this.setState({ [cl]: now }, () => {
+        this.addGridTextDynamic(cl)
+          .then(queue => this.drawGridCustom(queue))
+          .then(() => this.setState({ [cl]: Date.now() }))
+      });
+    } else if (now - active > 500) {
+      this.removeGridTextDynamic(cl)
+        .then(queue => this.drawGridCustom(queue))
+        .then(() => this.setState({ [cl]: false }))
+    };
+  };
 
 
 
 
+  helpClick(cel) {
+    console.log('click', cel)
+  };
 
 
 
-
-
-  // undrawCels(cels) {
-
-  //   cels.forEach(d => {
-  //     // console.log(d.id)
-  //     if (!d.remove) return null;
-  //     d3.select(`#${d.id}`)
-  //         .attr('class', 'delete')
-  //         .attr('id', null)
-  //         // .on('mouseover', null)
-  //         // .on('click', null)
-  //       .transition()
-  //         .delay(Math.floor(d.delay / 1.5))
-  //         .style('opacity', 0)
-  //         .remove();
-  //   });
-  // }
 
 
 
@@ -485,21 +507,7 @@ export default class App extends PureComponent {
 ////////////////////////////////////////////////////////////////////////////////
 
   handleResize(e) {
-    // clearTimeout(this.resizeTimeout);
-    // if (!this.state.isResizing) {
-    //   this.setState({ isResizing: true }, this.undrawGridFull);
-    // };
-    // this.resizeTimeout = setTimeout(() => {
-    //   this.setState({ isResizing: false, isClear: false }, this.config);
-    // }, 500);
-
     clearTimeout(this.resizeTimeout);
-
-    const redraw = () => setTimeout(() => {
-      this.setState({ isResizing: false, isClear: false }, () => {
-        this.config();
-      });
-    }, 100);
 
     if (!this.state.isResizing) {
       this.setState({ isResizing: true }, () => {
@@ -509,48 +517,34 @@ export default class App extends PureComponent {
               d3.select(this.grid.current).selectAll('div').remove();
             };
             this.setState({ isClear: true }, () => {
-              this.resizeTimeout = redraw();
+              this.resizeTimeout = this.helpRedraw();
             });
           })
       });
     };
 
     if (this.state.isClear) {
-      this.resizeTimeout = redraw();
+      this.resizeTimeout = this.helpRedraw();
     };
   };
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   handleMouse(e) {
-    // e.stopPropagation();
     const now = Date.now();
     if (now - this.lastMouseEvent < 16) return null;
+
     this.lastMouseEvent = now;
-
-
     const cel = this.gridText[parseInt(e.target.id.slice(3))];
     if (!cel) return null;
+
     if (e.type === 'mousemove') {
-      // console.log(cel.static, cel.cl, e.target.classList[0])
-      this.handleHover(cel)
+      this.helpCombinedHover(cel);
     };
+
     if (e.type === 'click') {
-      this.handleClick(cel);
+      this.helpClick(cel);
     };
   };
-
 
 
   handleTouchMove(e) {
@@ -558,60 +552,19 @@ export default class App extends PureComponent {
     const { clientX, clientY } = e.changedTouches[0];
     const el = document.elementFromPoint(clientX, clientY);
     const cel = el ? this.gridText[el.id.substring(3)] : null;
+
     if (cel) {
-      this.handleHover(cel);
+      this.helpCombinedHover(cel);
     };
   };
 
 
 
 
-  handleClick(cel) {
-    console.log(cel)
-  };
 
-
-  handleHover(cel) {
-    const cl = cel.onHover;
-    // if (!cel.static && !cel.cl) {
-    if (!cel.static) {
-      this.drawGridLetterSwap(cel);
-    } else if (cl) {
-
-      const now = Date.now();
-      if (now - this.lastHoverEvent < 1000) return null;
-      this.lastHoverEvent = now;
-
-
-
-      const active = this.state[cl];
-
-      if (!active) {
-        this.setState({ [cl]: now }, () => {
-          this.addGridTextDynamic(cl)
-            // .then(queue => console.log('add', queue))
-            .then(queue => this.drawGridCustom(queue))
-        })
-      } else {
-        this.setState({ [cl]: false }, () => {
-          this.removeGridTextDynamic(cl)
-            .then(queue => this.drawGridCustom(queue))
-        });
-
-
-
-      }
-
-      // console.log(this.state[cel.onHover])
-
-
-
-      // console.log('hover', cel)
-    };
-  };
-
-
-
+////////////////////////////////////////////////////////////////////////////////
+// ** Render ** //
+////////////////////////////////////////////////////////////////////////////////
 
   render() {
     const { celHeight, marginX, marginY } = this.state.params;
