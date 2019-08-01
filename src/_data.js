@@ -37,20 +37,72 @@ export const content = {
   projects: {
     str: 'projects',
     delay: 1750,
-    onHover: true,
+    onHover: 'projects',
     color: '#FFAF24',
+    data: [
+      {
+        str: 'drive my car',
+        click: 'drive',
+        color: '#5C98FF',
+      },
+      {
+        str: 'sleepy',
+        click: 'sleepy',
+        color: '#5C98FF',
+      },
+      {
+        str: 'αdex',
+        click: 'adex',
+        color: '#5C98FF',
+      },
+    ],
   },
   contact: {
     str: 'contact',
     delay: 2000,
-    onHover: true,
+    onHover: 'contact',
     color: '#FFAF24',
+    data: [
+      {
+        str: 'mparkerkozak@gmail.com',
+        strAlt: 'email',
+        click: 'mailto:mparkerkozak@gmail.com',
+        color: '#2AB2B2',
+      },
+    ],
   },
   links: {
     str: 'links',
     delay: 2250,
-    onHover: true,
+    onHover: 'links',
     color: '#FFAF24',
+    data: [
+      {
+        str: 'resume',
+        click: 'http://kozak.digital/_files/kozak_resume.pdf',
+        color: '#DD6EDD',
+      },
+      {
+        str: 'imdb',
+        click: 'https://www.imdb.com/name/nm3362994/',
+        color: '#DD6EDD',
+      },
+      {
+        str: 'github',
+        click: 'https://github.com/mpkozak',
+        color: '#DD6EDD',
+      },
+      {
+        str: 'linkedin',
+        click: 'https://www.linkedin.com/in/mpkozak/',
+        color: '#DD6EDD',
+      },
+      {
+        str: 'codepen',
+        click: 'https://codepen.io/mpkozak/pen/XoWNOQ',
+        color: '#DD6EDD',
+      },
+    ],
   },
 };
 
@@ -61,6 +113,7 @@ export const content = {
 export const layouts = {
   desktop: {
     title: {
+      // pos: [.5, .5],
       posX: .5,
       posY: .5,
     },
