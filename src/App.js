@@ -59,10 +59,11 @@ export default class App extends PureComponent {
     this.handleResize = this.handleResize.bind(this);
 
 
-    this.lastMouseEvent = Date.now();
+    this.lastMouseEvent = 0;
 
     this.handleTouchMove = this.handleTouchMove.bind(this);
-    this.handleMouse = this.handleMouse.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   };
 
 
@@ -122,7 +123,7 @@ export default class App extends PureComponent {
           if (!this.state.isLoaded) {
             return this.drawStackInitial();
           };
-          this.drawStackIsLoaded();
+          return this.drawStackIsLoaded();
         })
       })
       .catch(err => console.log(err));
@@ -197,6 +198,7 @@ export default class App extends PureComponent {
           c,
           r,
           id: `cel${id++}`,
+          active: true,
           text: randomLetter(),
         });
       };
@@ -220,6 +222,7 @@ export default class App extends PureComponent {
       queue.push(Object.assign(
         cel,
         {
+          active: true,
           text: char,
           color: color,
           static: true,
@@ -251,6 +254,7 @@ export default class App extends PureComponent {
         const cel = this.gridText[cols * r + c++];
         if (char === ' ') return null;
         queue.push(Object.assign(cel, {
+          active: true,
           text: char,
           color: color,
           cl: cl,
@@ -269,6 +273,7 @@ export default class App extends PureComponent {
     return Promise.all(
       cels.map((d, i, a) => {
         d.text = randomLetter();
+        d.active = true
         // d.delay = Math.floor(((a.length - i) / a.length) * 500 * Math.random());
         // d.delay = Math.floor(((a.length - i) / a.length) * 250 + 250 * Math.random());
         d.delay = Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
@@ -291,8 +296,7 @@ export default class App extends PureComponent {
 
   async drawStackInitial() {
     this.drawGridFull()
-      .then(done => console.log('done', done))
-      .catch(not => console.log('not', not))
+      // .catch(err => console.log('drawStackInitial() caught', err))
       .then(done =>
         Promise.all(Object.values(this.content).map(d =>
           this.addGridTextStatic(d)
@@ -306,7 +310,8 @@ export default class App extends PureComponent {
       .then(done =>
         this.setState({ isLoaded: true })
       )
-      .catch(err => console.log(err))
+      .catch(err => console.log('drawStackInitial() caught', err))
+
   };
 
 
@@ -321,7 +326,7 @@ export default class App extends PureComponent {
         })
       ))
       .then(done => this.drawGridFull())
-      .catch(err => console.log(err))
+      .catch(err => console.log('drawStackIsLoaded() caught', err))
   };
 
 
@@ -343,30 +348,12 @@ export default class App extends PureComponent {
       );
     };
 
-    // return new Promise((res, rej) =>
-    //   d3.select(this.grid.current)
-    //     .selectAll('div').data(this.gridText, d => d.id)
-    //     .enter().append('div')
-    //       .attr('id', d => d.id)
-    //       .text(d => d.text)
-    //       .style('left', d => d.c * celWidth + 'px')
-    //       .style('top', d => d.r * celHeight + 'px')
-    //       .style('width', celWidth + 'px')
-    //       .style('height', celHeight + 'px')
-    //       .style('color', d => d.color ? d.color : null)
-    //       .style('opacity', 0)
-    //     .transition()
-    //       .delay(d => calcDelay(d))
-    //       .style('opacity', 1)
-    //       .on('end', (d, i, a) => {
-    //         if (i < a.length - 1) return null;
-    //         res();
-    //       })
-    // );
     return (
       d3.select(this.grid.current)
         .selectAll('div').data(this.gridText, d => d.id)
         .enter().append('div')
+        // .each(d => d.active = true)
+        // .interrupt()
           .attr('id', d => d.id)
           .text(d => d.text)
           .style('left', d => d.c * celWidth + 'px')
@@ -378,25 +365,21 @@ export default class App extends PureComponent {
         .transition()
           .delay(d => calcDelay(d))
           .style('opacity', 1)
-          // .on('end', (d, i, a) => {
-          //   if (i < a.length - 1) return null;
-          //   res();
-          // })
-          .end()
+          .on('end', d => {
+            d.active = false;
+            delete d.delay;
+          })
+        .end()
     );
-
-
-
-
   };
 
 
   async drawGridCustom(cels) {
-    return new Promise((res, rej) => {
+    return (
       d3.select(this.grid.current)
-        .selectAll('div')
-        .data(cels, d => d.id)
-        .each(d => d.active = true)
+        .selectAll('div').data(cels, d => d.id)
+        // .each(d => d.active = true)
+          // .interrupt()
           .transition()
             .duration(100)
             .delay(d => d.delay)
@@ -406,43 +389,29 @@ export default class App extends PureComponent {
             .text(d => d.text)
             .style('color', d => d.color || null)
             .style('opacity', 1)
-            .on('end', (d, i, a) => {
+            .on('end', d => {
               d.active = false;
               delete d.delay;
-              if (i < a.length - 1) return null;
-              res();
-            });
-    });
+            })
+          .end()
+      );
   };
 
 
 
 
   async undrawGridFull() {
-
-    // d3.select(this.grid.current)
-    //   .selectAll('div').data(this.gridText, d => d.id)
-    //     .transition()
-    //       .delay(() => Math.random() * 250)
-    //       .style('opacity', 0)
-    //       .remove();
-
-    return new Promise((res, rej) => {
-      let i = 0;
-      setTimeout(() => res(false), 400)
-
+    return (
       d3.select(this.grid.current)
         .selectAll('div').data(this.gridText, d => d.id)
+          // .interrupt()
           .transition()
-            .duration(100)
+            .duration(1000)
             .delay(() => Math.floor(Math.random() * 250))
             .style('opacity', 0)
             .remove()
-            .on('end', () => {
-              if (++i < this.gridText.length) return null;
-              res(true);
-            });
-    });
+          .end()
+    );
   };
 
 
@@ -459,15 +428,20 @@ export default class App extends PureComponent {
     //       .style('opacity', 0)
     //     .transition()
     //       .text(d => d.text)
+    //       .style('color', null)
     //       .style('opacity', 1);
 
     cel.text = randomLetter();
-    d3.select(`#${cel.id}`)
+    d3.select(this.grid.current).select(`#${cel.id}`)
       .transition()
-        .style('opacity', 0)
+        .attr('class', 'invisible')
+        // .style('opacity', 0)
       .transition()
+        // .delay(1000)
         .text(cel.text)
-        .style('opacity', 1);
+        .style('color', null)
+        // .style('opacity', 1)
+        .attr('class', null)
   };
 
 
@@ -494,9 +468,10 @@ export default class App extends PureComponent {
 
 
   helpCombinedHover(cel) {
+    if (cel.active) return null;
     const cl = cel.hoverCl;
 
-    if (!cel.static && !cel.active) {
+    if (!cel.static) {
       this.drawGridLetterSwap(cel);
     } else if (cl) {
       this.helpToggleDynamicText(cl);
@@ -512,11 +487,16 @@ export default class App extends PureComponent {
       this.setState({ [cl]: now }, () => {
         this.addGridTextDynamic(cl)
           .then(queue => this.drawGridCustom(queue))
+          .catch(err => console.log('helpToggleDynamicText(cl) caught', err))
           .then(() => this.setState({ [cl]: Date.now() }))
       });
     } else if (now - active > 500) {
       this.removeGridTextDynamic(cl)
         .then(queue => this.drawGridCustom(queue))
+        .catch(err => {
+          console.log('helpToggleDynamicText(cl) caught', err);
+          this.drawGridLetterSwap(err)
+        })
         .then(() => this.setState({ [cl]: false }))
     };
   };
@@ -542,16 +522,15 @@ export default class App extends PureComponent {
 // ** Event Handlers ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-  handleResize(e) {
+  handleResize() {
     clearTimeout(this.resizeTimeout);
 
     if (!this.state.isResizing) {
       this.setState({ isResizing: true }, () => {
         this.undrawGridFull()
+          // .catch(not => console.log('undraw incomplete', not))
+          .catch(notDone => d3.select(this.grid.current).selectAll('div').remove())
           .then(done => {
-            if (!done) {
-              d3.select(this.grid.current).selectAll('div').remove();
-            };
             this.setState({ isClear: true }, () => {
               this.resizeTimeout = this.helpRedraw();
             });
@@ -565,22 +544,14 @@ export default class App extends PureComponent {
   };
 
 
-  handleMouse(e) {
-    const now = Date.now();
-    if (now - this.lastMouseEvent < 16) return null;
+  handleMouseMove({ target: { id }, timeStamp }) {
+    if (!id.includes('cel') || (timeStamp - this.lastMouseEvent < 16)) return null;
 
-    this.lastMouseEvent = now;
-    const cel = this.gridText[parseInt(e.target.id.slice(3))];
-    if (!cel) return null;
+    this.lastMouseEvent = timeStamp;
+    // const cel = this.gridText[parseInt(e.target.id.slice(3))];
+    const cel = d3.select(`#${id}`).datum();
 
-    if (e.type === 'mousemove') {
-      this.helpCombinedHover(cel);
-    };
-
-    if (e.type === 'click') {
-      this.test(e, cel);
-      this.helpClick(cel);
-    };
+    this.helpCombinedHover(cel);
   };
 
 
@@ -594,6 +565,13 @@ export default class App extends PureComponent {
       this.helpCombinedHover(cel);
     };
   };
+
+
+  handleClick(e) {
+    // this.test(e, cel);
+    // this.helpClick(cel);
+  }
+
 
   test(e) {
     // console.log(e)
@@ -617,8 +595,8 @@ export default class App extends PureComponent {
     return (
       <div id="App">
         <div id="Main"
-          onMouseMove={this.handleMouse}
-          onClick={this.handleMouse}
+          onMouseMove={this.handleMouseMove}
+          // onClick={this.handleMouseMove}
         >
           <div id="Grid" ref={this.grid} style={gridStyle} />
         </div>
