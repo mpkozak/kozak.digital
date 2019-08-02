@@ -6,103 +6,105 @@
 export const content = {
   title: {
     str: 'this is not a website',
-    delay: 0,
-    onHover: false,
     color: '#FFFFFF',
+    delay: 0,
   },
   name: {
     str: 'm. parker kozak',
-    delay: 1000,
-    onHover: false,
     color: '#D24141',
+    delay: 1000,
   },
   skills: {
     str: 'skills',
-    delay: 1500,
-    onHover: 'skills',
     color: '#FFAF24',
-    data: [
-      { str: 'css', color: '#2BB62B' },
-      { str: 'html', color: '#2BB62B' },
-      { str: 'bash', color: '#2BB62B' },
-      { str: 'sql', color: '#2BB62B' },
-      { str: 'express', color: '#2BB62B' },
-      { str: 'node', color: '#2BB62B' },
-      { str: 'webaudio api', color: '#2BB62B' },
-      { str: 'd3+svg', color: '#2BB62B' },
-      { str: 'react', color: '#2BB62B' },
-      { str: 'javascript', color: '#2BB62B' },
-    ],
+    delay: 1500,
+    hoverCl: 'skills',
+    onHover: {
+      color: '#2BB62B',
+      data: [
+        { str: 'css' },
+        { str: 'html' },
+        { str: 'bash' },
+        { str: 'sql' },
+        { str: 'express' },
+        { str: 'node' },
+        { str: 'webaudio api' },
+        { str: 'd3+svg' },
+        { str: 'react' },
+        { str: 'javascript' },
+      ],
+    },
   },
   projects: {
     str: 'projects',
-    delay: 1750,
-    onHover: 'projects',
     color: '#FFAF24',
-    data: [
-      {
-        str: 'drive my car',
-        click: 'drive',
-        color: '#5C98FF',
-      },
-      {
-        str: 'sleepy',
-        click: 'sleepy',
-        color: '#5C98FF',
-      },
-      {
-        str: 'αdex',
-        click: 'adex',
-        color: '#5C98FF',
-      },
-    ],
+    delay: 1750,
+    hoverCl: 'projects',
+    onHover: {
+      color: '#5C98FF',
+      data: [
+        {
+          str: 'drive my car',
+          iframe: 'drive',
+        },
+        {
+          str: 'sleepy',
+          iframe: 'sleepy',
+        },
+        {
+          str: 'αdex',
+          iframe: 'adex',
+        },
+      ],
+    },
   },
   contact: {
     str: 'contact',
-    delay: 2000,
-    onHover: 'contact',
     color: '#FFAF24',
-    data: [
-      {
-        str: 'mparkerkozak@gmail.com',
-        strAlt: 'email',
-        click: 'mailto:mparkerkozak@gmail.com',
-        color: '#2AB2B2',
-      },
-    ],
+    delay: 2000,
+    hoverCl: 'contact',
+    onHover: {
+      color: '#2AB2B2',
+      data: [
+        {
+          str: 'mparkerkozak@gmail.com',
+          strAlt: 'email',
+          link: 'mailto:mparkerkozak@gmail.com',
+          color: '#2AB2B2',
+        },
+      ],
+    },
   },
   links: {
     str: 'links',
-    delay: 2250,
-    onHover: 'links',
     color: '#FFAF24',
-    data: [
-      {
-        str: 'resume',
-        click: 'http://kozak.digital/_files/kozak_resume.pdf',
-        color: '#DD6EDD',
-      },
-      {
-        str: 'imdb',
-        click: 'https://www.imdb.com/name/nm3362994/',
-        color: '#DD6EDD',
-      },
-      {
-        str: 'github',
-        click: 'https://github.com/mpkozak',
-        color: '#DD6EDD',
-      },
-      {
-        str: 'linkedin',
-        click: 'https://www.linkedin.com/in/mpkozak/',
-        color: '#DD6EDD',
-      },
-      {
-        str: 'codepen',
-        click: 'https://codepen.io/mpkozak/pen/XoWNOQ',
-        color: '#DD6EDD',
-      },
-    ],
+    delay: 2250,
+    hoverCl: 'links',
+    onHover: {
+      color: '#DD6EDD',
+      data: [
+        {
+          str: 'resume',
+          link: 'http://kozak.digital/_files/kozak_resume.pdf',
+        },
+        {
+          str: 'imdb',
+          link: 'https://www.imdb.com/name/nm3362994/',
+        },
+        {
+          str: 'github',
+          link: 'https://github.com/mpkozak',
+        },
+        {
+          str: 'linkedin',
+          link: 'https://www.linkedin.com/in/mpkozak/',
+        },
+        {
+          str: 'codepen',
+          link: 'https://codepen.io/mpkozak/pen/XoWNOQ',
+        },
+      ],
+    },
   },
 };
 
