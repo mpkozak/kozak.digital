@@ -18,7 +18,7 @@ export const content = {
     str: 'skills',
     color: '#FFAF24',
     delay: 1500,
-    hoverCl: 'skills',
+    activeCl: 'skills',
     onHover: {
       color: '#2BB62B',
       data: [
@@ -39,21 +39,27 @@ export const content = {
     str: 'projects',
     color: '#FFAF24',
     delay: 1750,
-    hoverCl: 'projects',
+    activeCl: 'projects',
     onHover: {
       color: '#5C98FF',
       data: [
         {
           str: 'drive my car',
-          iframe: 'drive',
+          action: {
+            iframe: 'drive',
+          },
         },
         {
           str: 'sleepy',
-          iframe: 'sleepy',
+          action: {
+            iframe: 'sleepy',
+          },
         },
         {
           str: 'αdex',
-          iframe: 'adex',
+          action: {
+            iframe: 'adex',
+          },
         },
       ],
     },
@@ -62,15 +68,16 @@ export const content = {
     str: 'contact',
     color: '#FFAF24',
     delay: 2000,
-    hoverCl: 'contact',
+    activeCl: 'contact',
     onHover: {
       color: '#2AB2B2',
       data: [
         {
           str: 'mparkerkozak@gmail.com',
           strAlt: 'email',
-          link: 'mailto:mparkerkozak@gmail.com',
-          color: '#2AB2B2',
+          action: {
+            url: 'mailto:mparkerkozak@gmail.com',
+          },
         },
       ],
     },
@@ -79,29 +86,39 @@ export const content = {
     str: 'links',
     color: '#FFAF24',
     delay: 2250,
-    hoverCl: 'links',
+    activeCl: 'links',
     onHover: {
       color: '#DD6EDD',
       data: [
         {
           str: 'resume',
-          link: 'http://kozak.digital/_files/kozak_resume.pdf',
+          action: {
+            url: 'http://kozak.digital/_files/kozak_resume.pdf',
+          },
         },
         {
           str: 'imdb',
-          link: 'https://www.imdb.com/name/nm3362994/',
+          action: {
+            url: 'https://www.imdb.com/name/nm3362994/',
+          },
         },
         {
           str: 'github',
-          link: 'https://github.com/mpkozak',
+          action: {
+            url: 'https://github.com/mpkozak',
+          },
         },
         {
           str: 'linkedin',
-          link: 'https://www.linkedin.com/in/mpkozak/',
+          action: {
+            url: 'https://www.linkedin.com/in/mpkozak/',
+          },
         },
         {
           str: 'codepen',
-          link: 'https://codepen.io/mpkozak/pen/XoWNOQ',
+          action: {
+            url: 'https://codepen.io/mpkozak/pen/XoWNOQ',
+          },
         },
       ],
     },
@@ -115,7 +132,6 @@ export const content = {
 export const layouts = {
   desktop: {
     title: {
-      // pos: [.5, .5],
       posX: .5,
       posY: .5,
     },

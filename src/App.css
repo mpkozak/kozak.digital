@@ -24,21 +24,31 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  transition: opacity .1s ease;
+  /*transition: opacity .1s ease;*/
 }
 
-#Grid * {
+#Grid>.cel {
   position: absolute;
   font-size: inherit;
   color: #4A4B4D;
   text-align: center;
   background-color: rgba(0,0,0,0);
-  /*transition: opacity 10ms;*/
 }
 
-#Grid .invisible {
-  /*opacity: 0;*/
-  background-color: purple;
-  /*transition: opacity 200ms;*/
-
+#Grid>.cel.projects {
+  cursor: zoom-in;
 }
+
+#Grid>.cel.links, #Grid>.cel.info {
+  cursor: pointer;
+}
+
+#Grid>.cel.contact {
+  cursor: text;
+  -webkit-touch-callout: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+
+

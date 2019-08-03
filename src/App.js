@@ -1,13 +1,8 @@
 import React, { PureComponent } from 'react';
-import { d3 } from './_d3.js'
+import { d3, randomLetter, createCSSSelector } from './_help.js'
 import './App.css';
-// import { randomLetter, emptyGrid } from './_help.js';
 import { content, layouts } from './_data.js';
 
-
-
-const alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
-const randomLetter = () => alpha[Math.floor(Math.random() * 26)];
 
 
 
@@ -69,6 +64,7 @@ export default class App extends PureComponent {
 
 
   componentDidMount() {
+    console.log(document.styleSheets)
     window.addEventListener('resize', this.handleResize);
     // if (this.props.isMobile) {
     //   window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
@@ -168,6 +164,11 @@ export default class App extends PureComponent {
       celWidth = maxCelHeight * celRatio;
     };
 
+    createCSSSelector('.cel', {
+      width: celWidth,
+      height: celHeight,
+    });
+
     return { celWidth, celHeight };
   };
 
@@ -208,7 +209,7 @@ export default class App extends PureComponent {
 
 
   async addGridTextStatic(content) {
-    const { str, color, delay, hoverCl, layout } = content;
+    const { str, color, delay, activeCl, layout } = content;
     const { posX, posY } = layout;
     const { cols, rows } = this.state.params;
 
@@ -228,7 +229,7 @@ export default class App extends PureComponent {
           static: true,
           delay: delay + Math.floor((i / str.length) * 50 + 200 * Math.random()),
         },
-        hoverCl ? { hoverCl } : {}
+        activeCl ? { activeCl } : {}
       ));
     });
 
@@ -253,14 +254,18 @@ export default class App extends PureComponent {
       d.str.split('').forEach(char => {
         const cel = this.gridText[cols * r + c++];
         if (char === ' ') return null;
-        queue.push(Object.assign(cel, {
-          active: true,
-          text: char,
-          color: color,
-          cl: cl,
-          static: true,
-          delay: Math.floor(((queue.length / total) + Math.random()) * 250),
-        }));
+        queue.push(Object.assign(
+          cel,
+          {
+            active: true,
+            text: char,
+            color: color,
+            cl: cl,
+            delay: Math.floor(((queue.length / total) + Math.random()) * 250),
+            static: true,
+          },
+          d.action ? { action: d.action } : {},
+        ));
       });
     });
 
@@ -280,7 +285,7 @@ export default class App extends PureComponent {
         // delete d.cl;
         // delete d.color;
         // delete d.static;
-        ['cl', 'color', 'static'].forEach(key => delete d[key]);
+        ['cl', 'color', 'static', 'action'].forEach(key => delete d[key]);
         return d;
       })
     );
@@ -296,7 +301,6 @@ export default class App extends PureComponent {
 
   async drawStackInitial() {
     this.drawGridFull()
-      // .catch(err => console.log('drawStackInitial() caught', err))
       .then(done =>
         Promise.all(Object.values(this.content).map(d =>
           this.addGridTextStatic(d)
@@ -352,14 +356,14 @@ export default class App extends PureComponent {
       d3.select(this.grid.current)
         .selectAll('div').data(this.gridText, d => d.id)
         .enter().append('div')
-        // .each(d => d.active = true)
         // .interrupt()
           .attr('id', d => d.id)
+          .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
           .text(d => d.text)
           .style('left', d => d.c * celWidth + 'px')
           .style('top', d => d.r * celHeight + 'px')
-          .style('width', celWidth + 'px')
-          .style('height', celHeight + 'px')
+          // .style('width', celWidth + 'px')
+          // .style('height', celHeight + 'px')
           .style('color', d => d.color ? d.color : null)
           .style('opacity', 0)
         .transition()
@@ -380,6 +384,7 @@ export default class App extends PureComponent {
         .selectAll('div').data(cels, d => d.id)
         // .each(d => d.active = true)
           // .interrupt()
+            .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
           .transition()
             .duration(100)
             .delay(d => d.delay)
@@ -401,12 +406,21 @@ export default class App extends PureComponent {
 
 
   async undrawGridFull() {
+
+      const test = d3.select(this.grid.current)
+        .selectAll('div').data(this.gridText, d => d.id)
+        .interrupt()
+
+
+        console.log(test)
+
+
     return (
       d3.select(this.grid.current)
         .selectAll('div').data(this.gridText, d => d.id)
-          // .interrupt()
+          .interrupt()
           .transition()
-            .duration(1000)
+            .duration(100)
             .delay(() => Math.floor(Math.random() * 250))
             .style('opacity', 0)
             .remove()
@@ -421,6 +435,25 @@ export default class App extends PureComponent {
 
 
   drawGridLetterSwap(cel) {
+    cel.text = randomLetter();
+
+    d3.select(this.grid.current)
+      .select(`#${cel.id}`).datum(cel, d => d.id)
+        .attr('class', 'cel')
+      .transition()
+        .style('opacity', 0)
+      .transition()
+        .delay(100)
+        .text(cel.text)
+        .style('color', null)
+        .style('opacity', 1)
+
+
+
+
+
+
+
     // d3.select(this.grid.current)
     //   .selectAll('div').data([cel], d => d.id)
     //   .each(d => cel.text = randomLetter())
@@ -431,17 +464,16 @@ export default class App extends PureComponent {
     //       .style('color', null)
     //       .style('opacity', 1);
 
-    cel.text = randomLetter();
-    d3.select(this.grid.current).select(`#${cel.id}`)
-      .transition()
-        .attr('class', 'invisible')
-        // .style('opacity', 0)
-      .transition()
-        // .delay(1000)
-        .text(cel.text)
-        .style('color', null)
-        // .style('opacity', 1)
-        .attr('class', null)
+    // cel.text = randomLetter();
+    // d3.select(this.grid.current).select(`#${cel.id}`)
+    //     .attr('class', 'cel')
+    //   .transition()
+    //     .style('opacity', 0)
+    //   .transition()
+    //     .delay(100)
+    //     .text(cel.text)
+    //     .style('color', null)
+    //     .style('opacity', 1)
   };
 
 
@@ -469,7 +501,7 @@ export default class App extends PureComponent {
 
   helpCombinedHover(cel) {
     if (cel.active) return null;
-    const cl = cel.hoverCl;
+    const cl = cel.activeCl;
 
     if (!cel.static) {
       this.drawGridLetterSwap(cel);
@@ -505,13 +537,35 @@ export default class App extends PureComponent {
 
 
   helpClick(cel) {
-    if (this.state.isMobile) {
-      this.helpCombinedHover(cel);
-    };
+    // if (this.state.isMobile) {
+    //   this.helpCombinedHover(cel);
+    // };
     console.log('click', cel)
   };
 
-
+  toggleClickAction(cl, click, isMobile) {
+    switch (cl) {
+      case 'projects' :
+        if (isMobile) {
+          window.open(click, '_blank');
+        } else {
+          this.showIframe(click);
+        };
+        break;
+      case 'links' :
+        window.open(click, '_blank');
+        break;
+      case 'contact' :
+        if (isMobile) {
+          window.location = click;
+        };
+        break;
+      case 'info' :
+        window.open(click, '_blank');
+        break;
+      default : return null;
+    };
+  };
 
 
 
@@ -548,8 +602,8 @@ export default class App extends PureComponent {
     if (!id.includes('cel') || (timeStamp - this.lastMouseEvent < 16)) return null;
 
     this.lastMouseEvent = timeStamp;
-    // const cel = this.gridText[parseInt(e.target.id.slice(3))];
-    const cel = d3.select(`#${id}`).datum();
+    const cel = this.gridText[parseInt(id.slice(3))];
+    // const cel = d3.select(`#${id}`).datum();
 
     this.helpCombinedHover(cel);
   };
@@ -567,10 +621,13 @@ export default class App extends PureComponent {
   };
 
 
-  handleClick(e) {
-    // this.test(e, cel);
-    // this.helpClick(cel);
-  }
+  handleClick({ target: { id } }) {
+    if (!id.includes('cel')) return null;
+
+    const cel = this.gridText[parseInt(id.slice(3))];
+
+    this.helpClick(cel);
+  };
 
 
   test(e) {
@@ -596,7 +653,7 @@ export default class App extends PureComponent {
       <div id="App">
         <div id="Main"
           onMouseMove={this.handleMouseMove}
-          // onClick={this.handleMouseMove}
+          onClick={this.handleClick}
         >
           <div id="Grid" ref={this.grid} style={gridStyle} />
         </div>
