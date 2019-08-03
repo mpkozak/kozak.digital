@@ -64,7 +64,6 @@ export default class App extends PureComponent {
 
 
   componentDidMount() {
-    console.log(document.styleSheets)
     window.addEventListener('resize', this.handleResize);
     // if (this.props.isMobile) {
     //   window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
@@ -164,10 +163,10 @@ export default class App extends PureComponent {
       celWidth = maxCelHeight * celRatio;
     };
 
-    createCSSSelector('.cel', {
-      width: celWidth,
-      height: celHeight,
-    });
+    // createCSSSelector('.cel', {
+    //   width: celWidth,
+    //   height: celHeight,
+    // });
 
     return { celWidth, celHeight };
   };
@@ -191,46 +190,103 @@ export default class App extends PureComponent {
 ////////////////////////////////////////////////////////////////////////////////
 
   async addGridTextInitial({ cols, rows }) {
+    // const delay = this.props.isMobile ? 300 : 500;
+    // const dScale = (delay / 5);
+
+    const dScale = this.props.isMobile ? 60 : 100;
+    const tScalar = 250 / (cols * rows);
+
+    const calcDelay = (r, c) => {
+      // if (this.state.isLoaded) return Math.floor(500 * Math.random());
+      return Math.floor(
+        dScale * (
+          tScalar * ((2 * r) + c)
+          + Math.random()
+        )
+      );
+    };
+
     const grid = [];
     let id = 0;
+
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         grid.push({
           c,
           r,
           id: `cel${id++}`,
-          active: true,
           text: randomLetter(),
+          delay: this.state.isLoaded
+            ? Math.floor(500 * Math.random())
+            : calcDelay(r, c),
+          active: true,
         });
       };
     };
+
     return grid;
   };
 
 
   async addGridTextStatic(content) {
-    const { str, color, delay, activeCl, layout } = content;
-    const { posX, posY } = layout;
-    const { cols, rows } = this.state.params;
+    const { str, color, delay, activeCl, layout: { posX, posY } } = content;
+    const { isLoaded, params: { cols, rows } } = this.state;
 
     const queue = [];
     const r = Math.round(posY * rows);
-    let c = Math.round(posX * cols - str.length / 2);
+    const c = Math.round(posX * cols - str.length / 2);
+    const startIndex = cols * r + c;
 
     str.split('').forEach((char, i) => {
-      const cel = this.gridText[cols * r + c++];
       if (char === ' ') return null;
-      queue.push(Object.assign(
-        cel,
-        {
-          active: true,
-          text: char,
-          color: color,
-          static: true,
-          delay: delay + Math.floor((i / str.length) * 50 + 200 * Math.random()),
-        },
-        activeCl ? { activeCl } : {}
-      ));
+
+      // const cel = this.gridText[cols * r + c + i];
+      const cel = this.gridText[startIndex + i];
+
+      queue.push(cel);
+      cel.active = true;
+      cel.text = char;
+      cel.color = color;
+      cel.static = true;
+      if (!isLoaded) {
+        cel.delay = delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
+      };
+      if (activeCl) {
+        cel.activeCl = activeCl;
+      };
+
+
+      // cel.delay = isLoaded
+      //   ? cel.delay
+      //   : delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
+      // queue.push(Object.assign(
+      //   cel,
+      //   {
+      //     active: true,
+      //     text: char,
+      //     color: color,
+      //     static: true,
+      //   },
+      //   activeCl ? { activeCl } : {},
+      // ));
+
+
+      // queue.push(cel);
+      // cel.delay = isLoaded
+      //   ? cel.delay
+      //   : delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
+      // Object.assign(
+      //   cel,
+      //   {
+      //     active: true,
+      //     text: char,
+      //     color: color,
+      //     static: true,
+      //   },
+      //   activeCl ? { activeCl } : {},
+      // );
+
+
     });
 
     return queue;
@@ -240,7 +296,7 @@ export default class App extends PureComponent {
   async addGridTextDynamic(cl) {
     const { onHover: { color, data }, layout } = this.content[cl];
     const { posX, posY, offsetX, offsetY, deltaX, deltaY } = layout;
-    const { cols, rows } = this.state.params;
+    const { params: { cols, rows } } = this.state;
 
     const queue = [];
     const total = data.map(d => d.str.split('')).flat().length;
@@ -301,11 +357,16 @@ export default class App extends PureComponent {
 
   async drawStackInitial() {
     this.drawGridFull()
+      .then(test => console.time('parse static'))
       .then(done =>
         Promise.all(Object.values(this.content).map(d =>
           this.addGridTextStatic(d)
         ))
       )
+      .then(cels => {
+        console.timeEnd('parse static')
+        return cels;
+      })
       .then(cels =>
         Promise.all(cels.map(d =>
           this.drawGridCustom(d)
@@ -335,22 +396,24 @@ export default class App extends PureComponent {
 
 
   async drawGridFull() {
-    const { isLoaded, params } = this.state;
-    const { celWidth, celHeight, cols, rows } = params;
+    // const { isLoaded, params } = this.state;
+    // const { celWidth, celHeight, cols, rows } = params;
 
-    const calcDelay = d => {
-      if (isLoaded) return Math.floor(500 * Math.random());
-      const delay = this.props.isMobile ? 300 : 500;
-      const tScalar = 250 / (cols * rows);
-      const dScale = (delay / 5);
-      return Math.floor(
-        dScale * (
-          tScalar * (
-            (2 * d.r) + d.c
-          ) + Math.random()
-        )
-      );
-    };
+    // const calcDelay = d => {
+    //   if (isLoaded) return Math.floor(500 * Math.random());
+    //   const delay = this.props.isMobile ? 300 : 500;
+    //   const tScalar = 250 / (cols * rows);
+    //   const dScale = (delay / 5);
+    //   return Math.floor(
+    //     dScale * (
+    //       tScalar * (
+    //         (2 * d.r) + d.c
+    //       ) + Math.random()
+    //     )
+    //   );
+    // };
+
+    const { params: { celWidth, celHeight } } = this.state;
 
     return (
       d3.select(this.grid.current)
@@ -362,12 +425,13 @@ export default class App extends PureComponent {
           .text(d => d.text)
           .style('left', d => d.c * celWidth + 'px')
           .style('top', d => d.r * celHeight + 'px')
-          // .style('width', celWidth + 'px')
-          // .style('height', celHeight + 'px')
+          .style('width', celWidth + 'px')
+          .style('height', celHeight + 'px')
           .style('color', d => d.color ? d.color : null)
           .style('opacity', 0)
         .transition()
-          .delay(d => calcDelay(d))
+          // .delay(d => calcDelay(d))
+          .delay(d => d.delay)
           .style('opacity', 1)
           .on('end', d => {
             d.active = false;
