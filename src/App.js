@@ -58,7 +58,7 @@ export default class App extends PureComponent {
 
 
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
+    // window.addEventListener('resize', this.handleResize);
     // if (this.props.isMobile) {
     //   window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
     // };
@@ -106,6 +106,13 @@ export default class App extends PureComponent {
       })
       .catch(err => console.log(err));
   };
+
+
+
+
+
+
+
 
 
   async configContentLayout({ gridWidth, gridHeight }) {

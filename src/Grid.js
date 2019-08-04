@@ -23,9 +23,7 @@ export default class Grid {
 
     // this.isLoaded = false;
     // this.grid = domRef;
-    this.grid = {
-      current: domRef
-    }
+    this.grid = domRef;
     this.content = {};
     this.params = undefined;
     this.gridText = [];
@@ -59,7 +57,7 @@ export default class Grid {
 ////////////////////////////////////////////////////////////////////////////////
 
   async config() {
-    return this.configContentLayout(this.grid.current)
+    return this.configContentLayout(this.grid)
       .then(() => this.configCelSize(this.params))
       .then(() => this.configGridSize(this.params))
       .then(() => {
@@ -206,9 +204,9 @@ export default class Grid {
     this.params.marginX = (gridWidth - this.params.cols * celWidth) / 2;
     this.params.marginY = (gridHeight - this.params.rows * celHeight) / 2;
 
-    // this.grid.current.style.fontSize = celHeight;
-    // this.grid.current.style.marginLeft = (gridWidth - this.params.cols * celWidth) / 2;
-    // this.grid.current.style.marginTop = (gridHeight - this.params.rows * celHeight) / 2;
+    // this.grid.style.fontSize = celHeight;
+    // this.grid.style.marginLeft = (gridWidth - this.params.cols * celWidth) / 2;
+    // this.grid.style.marginTop = (gridHeight - this.params.rows * celHeight) / 2;
 
     return;
   };
@@ -349,7 +347,7 @@ export default class Grid {
     const { celWidth, celHeight } = this.params;
 
     return (
-      d3.select(this.grid.current)
+      d3.select(this.grid)
         .selectAll('div').data(this.gridText, d => d.id)
         .enter().append('div')
         .interrupt()
@@ -377,7 +375,7 @@ export default class Grid {
 
   async drawGridCustom(cels) {
     return (
-      d3.select(this.grid.current)
+      d3.select(this.grid)
         .selectAll('div').data(cels, d => d.id)
           .interrupt()
             .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
@@ -401,7 +399,7 @@ export default class Grid {
 
   drawGridLetterSwap(cel) {
     cel.text = this.randomLetter();
-    d3.select(this.grid.current)
+    d3.select(this.grid)
       .select(`#${cel.id}`).datum(cel, d => d.id)
       .interrupt()
         .attr('class', 'cel')
@@ -417,7 +415,7 @@ export default class Grid {
 
   async undrawGridFull() {
     return (
-      d3.select(this.grid.current)
+      d3.select(this.grid)
         .selectAll('div').data(this.gridText, d => d.id)
           .interrupt()
           .transition()
@@ -431,7 +429,7 @@ export default class Grid {
 
 
   eraseGrid() {
-    d3.select(this.grid.current)
+    d3.select(this.grid)
       .selectAll('div')
         .remove()
   };

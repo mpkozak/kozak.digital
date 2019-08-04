@@ -2,128 +2,259 @@
 
 
 
-
-export const content = {
-  title: {
-    str: 'this is not a website',
-    color: '#FFFFFF',
-    delay: 0,
-  },
-  name: {
-    str: 'm. parker kozak',
-    color: '#D24141',
-    delay: 1000,
-  },
-  skills: {
-    str: 'skills',
-    color: '#FFAF24',
-    delay: 1500,
-    activeCl: 'skills',
-    onHover: {
-      color: '#2BB62B',
-      data: [
-        { str: 'css' },
-        { str: 'html' },
-        { str: 'bash' },
-        { str: 'sql' },
-        { str: 'express' },
-        { str: 'node' },
-        { str: 'webaudio api' },
-        { str: 'd3+svg' },
-        { str: 'react' },
-        { str: 'javascript' },
-      ],
+export const content = (isMobile) => {
+  return ({
+    title: {
+      str: 'this is not a website',
+      color: '#FFFFFF',
+      delay: 0,
     },
-  },
-  projects: {
-    str: 'projects',
-    color: '#FFAF24',
-    delay: 1750,
-    activeCl: 'projects',
-    onHover: {
-      color: '#5C98FF',
-      data: [
-        {
-          str: 'drive my car',
-          action: {
-            iframe: 'drive',
-          },
-        },
-        {
-          str: 'sleepy',
-          action: {
-            iframe: 'sleepy',
-          },
-        },
-        {
-          str: 'αdex',
-          action: {
-            iframe: 'adex',
-          },
-        },
-      ],
+    name: {
+      str: 'm. parker kozak',
+      color: '#D24141',
+      delay: 1000,
     },
-  },
-  contact: {
-    str: 'contact',
-    color: '#FFAF24',
-    delay: 2000,
-    activeCl: 'contact',
-    onHover: {
-      color: '#2AB2B2',
-      data: [
-        {
-          str: 'mparkerkozak@gmail.com',
-          strAlt: 'email',
-          action: {
-            url: 'mailto:mparkerkozak@gmail.com',
-          },
-        },
-      ],
+    skills: {
+      str: 'skills',
+      color: '#FFAF24',
+      delay: 1500,
+      activeCl: 'skills',
+      onHover: {
+        color: '#2BB62B',
+        data: [
+          { str: 'css' },
+          { str: 'html' },
+          { str: 'bash' },
+          { str: 'sql' },
+          { str: 'express' },
+          { str: 'node' },
+          { str: 'webaudio api' },
+          { str: 'd3+svg' },
+          { str: 'react' },
+          { str: 'javascript' },
+        ],
+      },
     },
-  },
-  links: {
-    str: 'links',
-    color: '#FFAF24',
-    delay: 2250,
-    activeCl: 'links',
-    onHover: {
-      color: '#DD6EDD',
-      data: [
-        {
-          str: 'resume',
-          action: {
-            url: 'http://kozak.digital/_files/kozak_resume.pdf',
+    projects: {
+      str: 'projects',
+      color: '#FFAF24',
+      delay: 1750,
+      activeCl: 'projects',
+      onHover: {
+        color: '#5C98FF',
+        data: [
+          {
+            str: 'drive my car',
+            action: {
+              iframe: 'drive',
+            },
           },
-        },
-        {
-          str: 'imdb',
-          action: {
-            url: 'https://www.imdb.com/name/nm3362994/',
+          {
+            str: 'sleepy',
+            action: {
+              iframe: 'sleepy',
+            },
           },
-        },
-        {
-          str: 'github',
-          action: {
-            url: 'https://github.com/mpkozak',
+          {
+            str: 'αdex',
+            action: {
+              iframe: 'adex',
+            },
           },
-        },
-        {
-          str: 'linkedin',
-          action: {
-            url: 'https://www.linkedin.com/in/mpkozak/',
-          },
-        },
-        {
-          str: 'codepen',
-          action: {
-            url: 'https://codepen.io/mpkozak/pen/XoWNOQ',
-          },
-        },
-      ],
+        ],
+      },
     },
-  },
+    contact: {
+      str: 'contact',
+      color: '#FFAF24',
+      delay: 2000,
+      activeCl: 'contact',
+      onHover: {
+        color: '#2AB2B2',
+        data: [
+          isMobile
+            ? {
+                str: 'email',
+                action: {
+                  url: 'mailto:mparkerkozak@gmail.com',
+                }
+              }
+            : { str: 'mparkerkozak@gmail.com' },
+        ],
+      },
+    },
+    links: {
+      str: 'links',
+      color: '#FFAF24',
+      delay: 2250,
+      activeCl: 'links',
+      onHover: {
+        color: '#DD6EDD',
+        data: [
+          {
+            str: 'resume',
+            action: {
+              url: 'http://kozak.digital/_files/kozak_resume.pdf',
+            },
+          },
+          {
+            str: 'imdb',
+            action: {
+              url: 'https://www.imdb.com/name/nm3362994/',
+            },
+          },
+          {
+            str: 'github',
+            action: {
+              url: 'https://github.com/mpkozak',
+            },
+          },
+          {
+            str: 'linkedin',
+            action: {
+              url: 'https://www.linkedin.com/in/mpkozak/',
+            },
+          },
+          {
+            str: 'codepen',
+            action: {
+              url: 'https://codepen.io/mpkozak/pen/XoWNOQ',
+            },
+          },
+        ],
+      },
+    },
+  })
 };
+
+
+
+// export const content = {
+//   title: {
+//     str: 'this is not a website',
+//     color: '#FFFFFF',
+//     delay: 0,
+//   },
+//   name: {
+//     str: 'm. parker kozak',
+//     color: '#D24141',
+//     delay: 1000,
+//   },
+//   skills: {
+//     str: 'skills',
+//     color: '#FFAF24',
+//     delay: 1500,
+//     activeCl: 'skills',
+//     onHover: {
+//       color: '#2BB62B',
+//       data: [
+//         { str: 'css' },
+//         { str: 'html' },
+//         { str: 'bash' },
+//         { str: 'sql' },
+//         { str: 'express' },
+//         { str: 'node' },
+//         { str: 'webaudio api' },
+//         { str: 'd3+svg' },
+//         { str: 'react' },
+//         { str: 'javascript' },
+//       ],
+//     },
+//   },
+//   projects: {
+//     str: 'projects',
+//     color: '#FFAF24',
+//     delay: 1750,
+//     activeCl: 'projects',
+//     onHover: {
+//       color: '#5C98FF',
+//       data: [
+//         {
+//           str: 'drive my car',
+//           action: {
+//             iframe: 'drive',
+//           },
+//         },
+//         {
+//           str: 'sleepy',
+//           action: {
+//             iframe: 'sleepy',
+//           },
+//         },
+//         {
+//           str: 'αdex',
+//           action: {
+//             iframe: 'adex',
+//           },
+//         },
+//       ],
+//     },
+//   },
+//   contact: {
+//     str: 'contact',
+//     color: '#FFAF24',
+//     delay: 2000,
+//     activeCl: 'contact',
+//     onHover: {
+//       color: '#2AB2B2',
+//       data: [
+//         {
+//           // str: {
+//           //   desktop: 'mparkerkozak@gmail.com',
+//           //   mobileV: 'email',
+//           //   mobileH: 'mparkerkozak@gmail.com',
+//           // },
+//           str: 'mparkerkozak@gmail.com',
+//           strAlt: 'email',
+//           action: {
+//             url: 'mailto:mparkerkozak@gmail.com',
+//           },
+//         },
+//       ],
+//     },
+//   },
+//   links: {
+//     str: 'links',
+//     color: '#FFAF24',
+//     delay: 2250,
+//     activeCl: 'links',
+//     onHover: {
+//       color: '#DD6EDD',
+//       data: [
+//         {
+//           str: 'resume',
+//           action: {
+//             url: 'http://kozak.digital/_files/kozak_resume.pdf',
+//           },
+//         },
+//         {
+//           str: 'imdb',
+//           action: {
+//             url: 'https://www.imdb.com/name/nm3362994/',
+//           },
+//         },
+//         {
+//           str: 'github',
+//           action: {
+//             url: 'https://github.com/mpkozak',
+//           },
+//         },
+//         {
+//           str: 'linkedin',
+//           action: {
+//             url: 'https://www.linkedin.com/in/mpkozak/',
+//           },
+//         },
+//         {
+//           str: 'codepen',
+//           action: {
+//             url: 'https://codepen.io/mpkozak/pen/XoWNOQ',
+//           },
+//         },
+//       ],
+//     },
+//   },
+// };
 
 
 
@@ -184,7 +315,7 @@ export const layouts = {
     skills: {
       posX: .7,
       posY: .4,
-      offsetX: 5,
+      offsetX: 0,
       offsetY: -2,
       deltaX: -.7,
       deltaY: -1,
@@ -192,7 +323,7 @@ export const layouts = {
     projects: {
       posX: .22,
       posY: .18,
-      offsetX: 3,
+      offsetX: -1,
       offsetY: 3,
       deltaX: 1,
       deltaY: 2,
@@ -208,7 +339,7 @@ export const layouts = {
     links: {
       posX: .15,
       posY: .9,
-      offsetX: 2,
+      offsetX: -1,
       offsetY: -2,
       deltaX: .9,
       deltaY: -2,

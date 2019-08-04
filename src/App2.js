@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import { d3, randomLetter } from './_help.js'
+// import { d3, randomLetter } from './_help.js'
 import './App.css';
-import { content, layouts } from './_data.js';
+// import { content, layouts } from './_data.js';
 
 
 
