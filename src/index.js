@@ -1,9 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-// import App from './App.js';
-// import App from './App2.js';
-import App from './App3.js';
+import App from './App.js';
 
 
 
