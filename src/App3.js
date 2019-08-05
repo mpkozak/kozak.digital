@@ -21,27 +21,18 @@ export default class App extends PureComponent {
     this.proto = {
       alpha: ('qwertyuiopasdfghjklzxcvbnm').split(''),
       randomLetter: () => this.proto.alpha[Math.floor(Math.random() * 26)],
-      // content: content(props.isMobile),
-      // layouts: layouts,
       iframes: iframes,
       celRatio: 2 / 3,
       maxCelHeight: 18,
       minGrid: {
         desktop: [56, 32],
-        mobileH: [50, 21],
+        mobileH: [50, 23],
         mobileV: [31, 30],
       },
     };
     this.grid = React.createRef();
     this.params = {};
-    this.content = {
-      title: {},
-      name: {},
-      skills: {},
-      projects: {},
-      contact: {},
-      links: {},
-    };
+    this.content = {};
     this.gridText = [];
 
     this.resizeTimeout = undefined;
@@ -52,6 +43,7 @@ export default class App extends PureComponent {
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleClick = this.handleClick.bind(this);
   };
+
 
 
 
@@ -67,11 +59,11 @@ export default class App extends PureComponent {
   };
 
 
-  componentDidUpdate() {
-    console.log('st', this.state, this.params)
-    console.log(this.gridText.length, this.params.rows * this.params.cols)
+  // componentDidUpdate() {
 
-  }
+  // }
+
+
 
 
 
@@ -84,9 +76,12 @@ export default class App extends PureComponent {
     return {
       fontSize: this.params.celHeight.toFixed(2) + 'px',
       marginLeft: this.params.marginX + 'px',
-      marginTop: this.params.marginY + 'px',
+      marginTop: this.props.isMobile
+        ? null
+        : this.params.marginY + 'px',
     };
   };
+
 
   get mainStyle() {
     if (!this.props.isMobile) return null;
@@ -126,17 +121,7 @@ export default class App extends PureComponent {
           : 'mobileV',
     };
 
-this.params.layout = 'mobileH'
-
     this.content = content(this.params.layout);
-
-    // Object.keys(this.content)
-    //   .forEach(key => {
-    //     this.content[key] = {
-    //       ...content(this.params.layout)[key],
-    //       // layout: layouts[this.params.layout][key],
-    //     };
-    //   });
 
     return;
   };
@@ -171,10 +156,6 @@ this.params.layout = 'mobileH'
     this.params.rows = Math.floor(gridHeight / celHeight);
     this.params.marginX = (gridWidth - this.params.cols * celWidth) / 2;
     this.params.marginY = (gridHeight - this.params.rows * celHeight) / 2;
-
-const [c, r] = this.proto.minGrid[this.params.layout];
-this.params.cols = c;
-this.params.rows = r;
 
     return;
   };
@@ -280,11 +261,10 @@ this.params.rows = r;
     const queue = [];
 
     data.forEach((d, i) => {
-      // const startIndex = d.startIndex + Math.round(3 * (Math.random() - .5));
-      const startIndex = d.startIndex + (0
-        // this.props.isMobile
-          // ? Math.round(1 * (Math.random() - .5))
-          // : Math.round(3 * (Math.random() - .5))
+      const startIndex = d.startIndex + (
+        this.props.isMobile
+          ? Math.round(1 * (Math.random() - .5))
+          : Math.round(3 * (Math.random() - .5))
       );
 
       d.str.split('').forEach((char, j) => {
@@ -555,13 +535,10 @@ this.params.rows = r;
       window.location.href = value;
     };
     if (action === 'iframe') {
-
+      const data = iframes[value];
+      console.log('iframe', data)
     };
   };
-
-
-
-
 
 
 
@@ -596,7 +573,6 @@ this.params.rows = r;
 
     this.lastMouseEvent = timeStamp;
     const cel = this.gridText[parseInt(id.slice(3))];
-    // const cel = d3.select(`#${id}`).datum();
 
     this.helpCombinedHover(cel);
   };
@@ -621,6 +597,8 @@ this.params.rows = r;
 
     this.helpClick(cel);
   };
+
+
 
 
 

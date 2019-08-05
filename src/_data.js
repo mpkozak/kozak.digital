@@ -1,4 +1,5 @@
 
+
 const layouts = {
   desktop: {
     title: {
@@ -94,19 +95,19 @@ const layouts = {
       posY: .65,
     },
     skills: {
-      posX: .85,
+      posX: .65,
       posY: .1,
-      offsetX: 2,
+      offsetX: 7,
       offsetY: 2,
       deltaX: 1.2,
       deltaY: 1,
     },
     projects: {
-      posX: .15,
+      posX: .2,
       posY: .14,
-      offsetX: 6,
+      offsetX: 9,
       offsetY: 2,
-      deltaX: 1,
+      deltaX: 2,
       deltaY: 2,
     },
     contact: {
@@ -133,7 +134,7 @@ const layouts = {
 
 
 export const content = (layout = 'desktop') => {
-  const out = {
+  const data = {
     title: {
       str: 'this is not a website',
       color: '#FFFFFF',
@@ -151,18 +152,31 @@ export const content = (layout = 'desktop') => {
       activeCl: 'skills',
       onHover: {
         color: '#2BB62B',
-        data: [
-          { str: 'css' },
-          { str: 'html' },
-          { str: 'bash' },
-          { str: 'sql' },
-          { str: 'express' },
-          { str: 'node' },
-          { str: 'webaudio api' },
-          { str: 'd3+svg' },
-          { str: 'react' },
-          { str: 'javascript' },
-        ],
+        data: layout === 'mobileH'
+          ? [
+              { str: 'javascript' },
+              { str: 'react' },
+              { str: 'd3+svg' },
+              { str: 'webaudio api' },
+              { str: 'node' },
+              { str: 'express' },
+              { str: 'sql' },
+              { str: 'bash' },
+              { str: 'html' },
+              { str: 'css' },
+            ]
+          : [
+              { str: 'css' },
+              { str: 'html' },
+              { str: 'bash' },
+              { str: 'sql' },
+              { str: 'express' },
+              { str: 'node' },
+              { str: 'webaudio api' },
+              { str: 'd3+svg' },
+              { str: 'react' },
+              { str: 'javascript' },
+            ]
       },
     },
     projects: {
@@ -257,10 +271,10 @@ export const content = (layout = 'desktop') => {
   };
 
   Object.keys(layouts[layout]).forEach(key => {
-    out[key].layout = layouts[layout][key];
+    data[key].layout = layouts[layout][key];
   });
 
-  return out;
+  return data;
 };
 
 
