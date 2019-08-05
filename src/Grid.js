@@ -81,19 +81,6 @@ export default class Grid {
 
 
 
-  // async addText() {
-  //   .then(() => this.addGridTextInitial(this.params))
-  //   .then(() => {
-  //     this.isBuilt = true;
-  //     if (!this.isLoaded) {
-  //       // return this.drawStackIsLoaded();
-  //     };
-  //     console.log('ready to draw')
-  //     return this.drawStackInitial();
-  //   })
-  // }
-
-
   async drawStackInitial() {
     return this.drawGridFull()
       .then(() => Promise.all(
@@ -125,21 +112,6 @@ export default class Grid {
 
 
 
-
-
-  // async drawStackIsLoaded() {
-  //   Promise.all(Object.values(this.content).map(d =>
-  //     this.addGridTextStatic(d)
-  //   ))
-  //     .then(done => Promise.all(
-  //       ['skills', 'projects', 'links', 'contact'].map(cl => {
-  //         if (!this.state[cl]) return null;
-  //         return this.addGridTextDynamic(cl);
-  //       })
-  //     ))
-  //     .then(done => this.drawGridFull())
-  //     .catch(err => console.log('drawStackIsLoaded() caught', err))
-  // };
 
 
 
@@ -437,6 +409,22 @@ export default class Grid {
 
 
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ** Event Helpers ** //
+////////////////////////////////////////////////////////////////////////////////
+
+  helpCombinedHover(cel) {
+    if (cel.active) return null;
+    const cl = cel.activeCl;
+
+    if (!cel.static) {
+      this.drawGridLetterSwap(cel);
+    } else if (cl) {
+      this.helpToggleDynamicText(cl);
+    };
+  };
 
 
 
