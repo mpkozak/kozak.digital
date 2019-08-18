@@ -34,7 +34,9 @@
   text-align: center;
   background: transparent;
   /*background-color: rgba(0,0,0,0);*/
+  /*background-color: #1A1C1E;*/
   z-index: 200;
+  /*border: 1px solid red;*/
 }
 
 #Grid>.cel.projects {
@@ -54,20 +56,17 @@
 
 #IframeBox {
   position: absolute;
-  /*left: 50%;*/
-  /*top: 50%;*/
-  /*width: 0%;*/
-  /*height: 0%;*/
-  /*padding: 1%;*/
-  /*transform: scale(1.26);*/
+  border-radius: .5vmin;
   opacity: 0;
   pointer-events: none;
   z-index: 100;
   overflow: hidden;
-  transition: opacity 1s;
-  /*padding: 1%;*/
-  border-radius: .5vmin;
-  transform: scale(.99)translateY(2px);
+  /*transform: scale(.99)translateY(2px);*/
+  /*transform: scale(.99, .996);*/
+  /*transform: scale(.99);*/
+  transform: scale(0);
+  /*transition: opacity 2s;*/
+  transition: opacity 1s ease, transform 1s ease;
 }
 
 #IframeBox>iframe {
@@ -75,8 +74,6 @@
   width: 100%;
   height: 100%;
   border: none;
-  /*transform: scale(0);*/
-  /*transition: transform 2s;*/
 }
 
 
