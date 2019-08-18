@@ -9,6 +9,7 @@
 }
 
 
+
 #Main {
   position: relative;
   width: calc(100% - 5vmin);
@@ -20,11 +21,11 @@
 }
 
 
+
 #Grid {
   position: absolute;
   width: 100%;
   height: 100%;
-  /*transition: opacity .1s ease;*/
 }
 
 #Grid>.cel {
@@ -33,10 +34,7 @@
   color: #4A4B4D;
   text-align: center;
   background: transparent;
-  /*background-color: rgba(0,0,0,0);*/
-  /*background-color: #1A1C1E;*/
   z-index: 200;
-  /*border: 1px solid red;*/
 }
 
 #Grid>.cel.projects {
@@ -54,6 +52,8 @@
   user-select: text;
 }
 
+
+
 #IframeBox {
   position: absolute;
   border-radius: .5vmin;
@@ -61,11 +61,7 @@
   pointer-events: none;
   z-index: 100;
   overflow: hidden;
-  /*transform: scale(.99)translateY(2px);*/
-  /*transform: scale(.99, .996);*/
-  /*transform: scale(.99);*/
   transform: scale(0);
-  /*transition: opacity 2s;*/
   transition: opacity 1s ease, transform 1s ease;
 }
 
@@ -75,9 +71,3 @@
   height: 100%;
   border: none;
 }
-
-
-
-
-
-

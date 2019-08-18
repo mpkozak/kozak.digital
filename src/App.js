@@ -55,12 +55,17 @@ export default class App extends PureComponent {
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+// ** Lifecycle Methods ** //
+////////////////////////////////////////////////////////////////////////////////
+
+
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
     if (this.props.isMobile) {
       window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
     };
-    this.config(this.grid.current)
+    this.config()
       .then(() => this.draw())
       .catch(err => console.error('componentDidMount()', err));
   };
@@ -325,6 +330,14 @@ export default class App extends PureComponent {
   };
 
 
+  async addTextStaticAll() {
+    return Promise.all(
+      Object.values(this.content)
+        .map(d => this.addTextStatic(d))
+    );
+  };
+
+
   async addTextDynamic({ activeCl, onHover: { color, data, total } }) {
     const queue = [];
 
@@ -355,6 +368,16 @@ export default class App extends PureComponent {
     });
 
     return queue;
+  };
+
+
+  async addTextDynamicAll() {
+    return Promise.all(
+      Object.keys(this.state.active).map(cl => {
+        if (!this.state.active[cl]) return null;
+        return this.addTextDynamic(this.content[cl]);
+      })
+    );
   };
 
 
@@ -393,10 +416,7 @@ export default class App extends PureComponent {
 
   async drawStackInitial() {
     return this.drawGridFull()
-      .then(() => Promise.all(
-        Object.values(this.content)
-          .map(d => this.addTextStatic(d))
-      ))
+      .then(() => this.addTextStaticAll())
       .then(cels => Promise.all(
         cels.map(d => this.drawGridCustom(d))
       ))
@@ -406,16 +426,8 @@ export default class App extends PureComponent {
 
 
   async drawStackHasDrawn() {
-    return Promise.all(
-      Object.values(this.content)
-        .map(d => this.addTextStatic(d))
-    )
-      .then(() => Promise.all(
-        Object.keys(this.state.active).map(cl => {
-          if (!this.state.active[cl]) return null;
-          return this.addTextDynamic(this.content[cl]);
-        })
-      ))
+    return this.addTextStaticAll()
+      .then(() => this.addTextDynamicAll())
       .then(() => this.drawGridFull())
       .catch(err => console.error('drawStackHasDrawn()', err));
   };
@@ -445,8 +457,6 @@ export default class App extends PureComponent {
           .style('width', celWidth + 'px')
           .style('height', celHeight + 'px')
           .style('color', d => d.color ? d.color : null)
-          // .style('line-height', celHeight * .85 + 'px')
-          // .style('letter-spacing', celWidth + 'px')
           .style('opacity', 0)
         .transition()
           .delay(d => d.delay)
@@ -558,19 +568,25 @@ export default class App extends PureComponent {
 
 
   async iframeGetHiddenCels({ startCol, endCol, startRow, endRow }) {
-    return Promise.all(this.gridText
-      .filter(a =>
-        a.c >= startCol && a.c < endCol
+    const len = (endCol - startCol) * (endRow - startRow);
+    const cels = [];
+    let i = 0
+
+    while (cels.length < len) {
+      const cel = this.gridText[i++];
+      if (
+        cel.c >= startCol && cel.c < endCol
         &&
-        a.r >= startRow && a.r < endRow
-      )
-      .map(d => {
-        d.active = true;
-        d.delay = this.proto.randomDelay() * 3;
-        d.hidden = true;
-        return d;
-      })
-    );
+        cel.r >= startRow && cel.r < endRow
+      ) {
+        cel.active = true;
+        cel.hidden = true;
+        cel.delay = this.proto.randomDelay() * 3;
+        cels.push(cel);
+      };
+    };
+
+    return cels;
   };
 
 
@@ -614,6 +630,7 @@ export default class App extends PureComponent {
     const { ratio } = this.proto.iframes[value];
     const dimen = await this.iframeGetSize(ratio);
     const hidden = await this.iframeGetHiddenCels(dimen);
+
     const corners = [hidden[0], hidden[hidden.length - 1]];
     this.params.iframeStyle = await this.iframeSetStyle(corners);
     const masked = await this.iframeGetMaskedCels();
@@ -630,21 +647,9 @@ export default class App extends PureComponent {
 
   async clearIframe() {
     this.setState({ iframeLoaded: false }, async () => {
-      // const queue = await Promise.all(this.queue.map(d => {
-      //   d.active = true;
-      //   d.delay = this.proto.randomDelay() * 3;
-      //   if (d.hidden) {
-      //     delete d.hidden;
-      //   } else if (d.masked) {
-      //     Object.assign(d, d.snapshot);
-      //     delete d.snapshot;
-      //     delete d.masked;
-      //   };
-      //   return d;
-      // }));
-      this.queue.forEach(d => {
+      const queue = await Promise.all(this.queue.map(d => {
         d.active = true;
-        d.delay = this.proto.randomDelay() * 3;
+        d.delay = this.proto.randomDelay();
         if (d.hidden) {
           delete d.hidden;
         } else if (d.masked) {
@@ -652,9 +657,9 @@ export default class App extends PureComponent {
           delete d.snapshot;
           delete d.masked;
         };
-
-      })
-      await this.drawGridCustom(this.queue);
+        return d;
+      }));
+      await this.drawGridCustom(queue);
       this.setState({ iframe: false });
     });
   };
@@ -770,6 +775,7 @@ export default class App extends PureComponent {
 // ** Event Handlers ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+
   handleResize() {
     clearTimeout(this.resizeTimeout);
 
@@ -840,8 +846,6 @@ export default class App extends PureComponent {
   get gridStyle() {
     if (!this.state.hasConfig) return null;
     return {
-      // fontSize: this.params.celHeight.toFixed(2) + 'px',
-      // lineHeight: (this.params.celHeight * .9).toFixed(2) + 'px',
       fontSize: this.params.celHeight + 'px',
       lineHeight: (this.params.celHeight * .9).toFixed(2) + 'px',
       marginLeft: this.params.marginX + 'px',
@@ -895,9 +899,13 @@ export default class App extends PureComponent {
   };
 
 
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // ** Render ** //
 ////////////////////////////////////////////////////////////////////////////////
+
 
   render() {
     const { iframe } = this.state;
@@ -915,10 +923,10 @@ export default class App extends PureComponent {
             <iframe
               src={this.iframeUrl}
               style={this.iframeStyle}
-              onLoad={this.handleIframeLoad}
               allow="camera;microphone"
               title="project"
               scrolling="no"
+              onLoad={this.handleIframeLoad}
             />
           </div>
         </div>
