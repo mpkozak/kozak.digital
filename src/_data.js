@@ -133,7 +133,7 @@ const layouts = {
 
 
 
-export const content = (layout = 'desktop') => {
+export const setContent = (layout = 'desktop') => {
   const data = {
     title: {
       str: 'this is not a website',
@@ -280,6 +280,7 @@ export const iframes = {
     git: 'https://github.com/mpkozak/drive/',
     url: 'https://kozak.digital/drive',
     ratio: (16 / 9),
+    scale: 1.26,
   },
   sleepy: {
     name: 'sleepy',
@@ -288,6 +289,7 @@ export const iframes = {
     git: '#',
     url: 'https://kozak.digital/sleepy',
     ratio: (9 / 16),
+    scale: 1,
   },
   adex: {
     name: 'αdex',
@@ -296,5 +298,6 @@ export const iframes = {
     git: 'https://github.com/mpkozak/a.dex/',
     url: 'https://kozak.digital/adex',
     ratio: (17 / 15),
+    scale: 1.04,
   },
 };

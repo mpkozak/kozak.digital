@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { d3 } from './_d3.js'
 import './App.css';
-import { content, iframes } from './_data.js';
+import { setContent, iframes } from './_data.js';
 
 
 
@@ -12,18 +12,21 @@ export default class App extends PureComponent {
     super(props);
     this.state = {
       hasConfig: false,
-      hasDrawn: true,
+      hasDrawn: false,
       isResizing: false,
       active: {
         skills: false,
-        projects: true,
+        projects: false,
         links: false,
         contact: false,
       },
+      iframe: false,
+      iframeLoaded: false,
     };
     this.proto = {
       alpha: ('qwertyuiopasdfghjklzxcvbnm').split(''),
       randomLetter: () => this.proto.alpha[Math.floor(Math.random() * 26)],
+      randomDelay: () => Math.floor(Math.random() * 250),
       iframes: iframes,
       celRatio: 2 / 3,
       maxCelHeight: 18,
@@ -46,6 +49,7 @@ export default class App extends PureComponent {
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.handleIframeLoad = this.handleIframeLoad.bind(this);
   };
 
 
@@ -72,56 +76,23 @@ export default class App extends PureComponent {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// ** Getters ** //
-////////////////////////////////////////////////////////////////////////////////
-
-  get gridStyle() {
-    if (!this.state.hasConfig) return null;
-    return {
-      fontSize: this.params.celHeight.toFixed(2) + 'px',
-      marginLeft: this.params.marginX + 'px',
-      marginTop: this.props.isMobile
-        ? null
-        : this.params.marginY + 'px',
-    };
-  };
-
-
-  get mainStyle() {
-    if (!this.props.isMobile) return null;
-    return {
-      width: '100%',
-      height: '100%',
-      userSelect: 'none !important',
-    };
-  };
-
-  get iframeStyle() {
-    if (!this.state.iframe) return null;
-    return {
-      ...this.params.iframeStyle,
-      opacity: 1,
-    };
-  }
-
-
-
-////////////////////////////////////////////////////////////////////////////////
 // ** Layout Configuration ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+
   async config() {
-    return this.configContentLayout(this.grid.current)
-      .then(() => this.configCelSize(this.params))
-      .then(() => this.configGridSize(this.params))
-      .then(() => this.configGridLayout(this.params))
-      .then(() => this.setState({ hasConfig: true }))
-      .catch(err => console.error('config()', err))
+    const params = await this.configContentLayout(this.grid.current);
+    const content = setContent(params.layout);
+    await this.configCelSize(params);
+    await this.configGridSize(params);
+    this.params = params;
+    this.content = await this.configGridLayout(params, content);
+    this.setState({ hasConfig: true });
   };
 
 
   async configContentLayout({ clientWidth, clientHeight }) {
-    this.params = {
+    return {
       gridWidth: clientWidth,
       gridHeight: clientHeight,
       layout: !this.props.isMobile
@@ -130,57 +101,54 @@ export default class App extends PureComponent {
           ? 'mobileH'
           : 'mobileV',
     };
-
-    this.content = content(this.params.layout);
-
-    return;
   };
 
 
-  async configCelSize({ gridWidth, gridHeight, layout }) {
+  async configCelSize(params) {
+    const { gridWidth, gridHeight, layout } = params;
     const { celRatio, maxCelHeight, minGrid } = this.proto;
     const [minCols, minRows] = minGrid[layout];
 
     const w = gridWidth / minCols;
     const h = gridHeight / minRows;
-    this.params.celWidth = h * celRatio;
-    this.params.celHeight = w / celRatio;
+    let celWidth = h * celRatio;
+    let celHeight = w / celRatio;
 
-    if (gridHeight / this.params.celHeight < minRows) {
-      this.params.celHeight = h;
+    if (gridHeight / celHeight < minRows) {
+      celHeight = h;
     } else {
-      this.params.celWidth = w;
+      celWidth = w;
     };
 
-    if (this.params.celHeight > maxCelHeight) {
-      this.params.celHeight = maxCelHeight;
-      this.params.celWidth = maxCelHeight * celRatio;
+    if (celHeight > maxCelHeight) {
+      celHeight = maxCelHeight;
+      celWidth = maxCelHeight * celRatio;
     };
 
-    // this.params.celHeight = Math.round(this.params.celHeight);
-    // this.params.celWidth = Math.round(this.params.celWidth);
-    return;
+    return Object.assign(params, { celWidth, celHeight });
   };
 
 
-  async configGridSize({ gridWidth, gridHeight, celWidth, celHeight }) {
-    this.params.cols = Math.floor(gridWidth / celWidth);
-    this.params.rows = Math.floor(gridHeight / celHeight);
-    this.params.marginX = (gridWidth - this.params.cols * celWidth) / 2;
-    this.params.marginY = (gridHeight - this.params.rows * celHeight) / 2;
+  async configGridSize(params) {
+    const { gridWidth, gridHeight, celWidth, celHeight } = params;
+    const cols = Math.floor(gridWidth / celWidth);
+    const rows = Math.floor(gridHeight / celHeight);
+    const marginX = (gridWidth - cols * celWidth) / 2;
+    const marginY = (gridHeight - rows * celHeight) / 2;
 
-    return;
+    return Object.assign(params, { cols, rows, marginX, marginY });
   };
 
 
-  async configGridLayout({ cols, rows }) {
-    Object.keys(this.content).forEach(key => {
-      const { str, onHover, layout } = this.content[key];
+  async configGridLayout(params, content) {
+    const { cols, rows } = params;
+    Object.keys(content).forEach(key => {
+      const { str, onHover, layout } = content[key];
       const { posX, posY, offsetX, offsetY, deltaX, deltaY } = layout;
 
       const baseR = Math.round(posY * rows);
       const baseC = Math.round(posX * cols - str.length / 2);
-      this.content[key].startIndex = cols * baseR + baseC;
+      content[key].startIndex = cols * baseR + baseC;
 
       if (!onHover) return null;
 
@@ -194,8 +162,96 @@ export default class App extends PureComponent {
       });
     });
 
-    return;
+    return content;
   };
+
+
+  // async config() {
+  //   return this.configContentLayout(this.grid.current)
+  //     .then(() => this.configCelSize(this.params))
+  //     .then(() => this.configGridSize(this.params))
+  //     .then(() => this.configGridLayout(this.params))
+  //     .then(() => this.setState({ hasConfig: true }))
+  //     .catch(err => console.error('config()', err))
+  // };
+
+
+  // async configContentLayout({ clientWidth, clientHeight }) {
+  //   this.params = {
+  //     gridWidth: clientWidth,
+  //     gridHeight: clientHeight,
+  //     layout: !this.props.isMobile
+  //       ? 'desktop'
+  //       : clientWidth > clientHeight
+  //         ? 'mobileH'
+  //         : 'mobileV',
+  //   };
+
+  //   this.content = setContent(this.params.layout);
+
+  //   return;
+  // };
+
+
+  // async configCelSize({ gridWidth, gridHeight, layout }) {
+  //   const { celRatio, maxCelHeight, minGrid } = this.proto;
+  //   const [minCols, minRows] = minGrid[layout];
+
+  //   const w = gridWidth / minCols;
+  //   const h = gridHeight / minRows;
+  //   this.params.celWidth = h * celRatio;
+  //   this.params.celHeight = w / celRatio;
+
+  //   if (gridHeight / this.params.celHeight < minRows) {
+  //     this.params.celHeight = h;
+  //   } else {
+  //     this.params.celWidth = w;
+  //   };
+
+  //   if (this.params.celHeight > maxCelHeight) {
+  //     this.params.celHeight = maxCelHeight;
+  //     this.params.celWidth = maxCelHeight * celRatio;
+  //   };
+
+  //   // this.params.celHeight = Math.round(this.params.celHeight);
+  //   // this.params.celWidth = Math.round(this.params.celWidth);
+  //   return;
+  // };
+
+
+  // async configGridSize({ gridWidth, gridHeight, celWidth, celHeight }) {
+  //   this.params.cols = Math.floor(gridWidth / celWidth);
+  //   this.params.rows = Math.floor(gridHeight / celHeight);
+  //   this.params.marginX = (gridWidth - this.params.cols * celWidth) / 2;
+  //   this.params.marginY = (gridHeight - this.params.rows * celHeight) / 2;
+
+  //   return;
+  // };
+
+
+  // async configGridLayout({ cols, rows }) {
+  //   Object.keys(this.content).forEach(key => {
+  //     const { str, onHover, layout } = this.content[key];
+  //     const { posX, posY, offsetX, offsetY, deltaX, deltaY } = layout;
+
+  //     const baseR = Math.round(posY * rows);
+  //     const baseC = Math.round(posX * cols - str.length / 2);
+  //     this.content[key].startIndex = cols * baseR + baseC;
+
+  //     if (!onHover) return null;
+
+  //     onHover.total = onHover.data
+  //       .map(d => d.str.split('')).flat().length;
+  //     onHover.data.forEach((d, i) => {
+  //       const r = baseR + (deltaY * i) + offsetY;
+  //       const c =
+  //         Math.round(baseC + (deltaX * i) - d.str.length / 2) + offsetX;
+  //       d.startIndex = cols * r + c;
+  //     });
+  //   });
+
+  //   return;
+  // };
 
 
 
@@ -261,6 +317,9 @@ export default class App extends PureComponent {
       if (activeCl) {
         cel.activeCl = activeCl;
       };
+      if (cel.hidden) {
+        delete cel.hidden;
+      };
 
       queue.push(cel);
     });
@@ -310,12 +369,26 @@ export default class App extends PureComponent {
         d.active = true;
         d.delay =
           Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
-        ['cl', 'color', 'static', 'action'].forEach(key => delete d[key]);
+        ['cl', 'activeCl', 'color', 'static', 'action'].forEach(key => delete d[key]);
         return d;
       })
     );
   };
 
+
+  async removeTextAll() {
+    const cels = this.gridText.filter(a => a.static && !a.hidden);
+    return Promise.all(
+      cels.map((d, i, a) => {
+        d.text = this.proto.randomLetter();
+        d.active = true;
+        d.delay =
+          Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
+        ['cl', 'color', 'static', 'action'].forEach(key => delete d[key]);
+        return d;
+      })
+    );
+  }
 
 
 
@@ -371,6 +444,7 @@ export default class App extends PureComponent {
 // ** D3 ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+
   async drawGridFull() {
     const { celWidth, celHeight } = this.params;
 
@@ -409,13 +483,13 @@ export default class App extends PureComponent {
             .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
           .transition()
             .duration(100)
-            .delay(d => d.delay)
+            .delay(d => d.delay || this.proto.randomDelay())
             .style('opacity', 0)
           .transition()
             .duration(100)
             .text(d => d.text)
             .style('color', d => d.color || null)
-            .style('opacity', 1)
+            .style('opacity', d => d.hidden ? 0 : 1)
             .on('end', d => {
               d.active = false;
               delete d.delay;
@@ -437,20 +511,35 @@ export default class App extends PureComponent {
         .delay(100)
         .text(cel.text)
         .style('color', null)
-        .style('opacity', 1)
+        .style('opacity', 1);
+  };
+
+
+  async drawGridHide(cels) {
+    return d3.select(this.grid.current)
+      .selectAll('div').data(cels, d => d.id)
+        .interrupt()
+          .attr('class', d => 'cel iframe')
+        .transition()
+          .duration(100)
+          .delay(d => d.delay)
+          .style('opacity', 0)
+          .on('end', d => {
+            d.active = false;
+            delete d.delay;
+          })
+        .end();
   };
 
 
   async undrawGridFull() {
-    const randomDelay = () => Math.floor(Math.random() * 250);
-
     return (
       d3.select(this.grid.current)
         .selectAll('div').data(this.gridText, d => d.id)
           .interrupt()
           .transition()
             .duration(100)
-            .delay(() => randomDelay())
+            .delay(() => this.proto.randomDelay())
             .style('opacity', 0)
             .remove()
           .end()
@@ -461,14 +550,17 @@ export default class App extends PureComponent {
   eraseGrid() {
     d3.select(this.grid.current)
       .selectAll('div')
-        .remove()
+        .remove();
   };
+
+
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // ** Iframe Methods ** //
 ////////////////////////////////////////////////////////////////////////////////
+
 
   async iframeGetSize(ratio) {
     const { cols, rows } = this.params;
@@ -494,63 +586,154 @@ export default class App extends PureComponent {
     const endRow = startRow + gridH;
 
     return { startCol, endCol, startRow, endRow };
-
-//       d3.select(this.grid.current)
-//         .selectAll('div').data(cels, d => d.id)
-//           // .each(d => d.active = true)
-//           // .interrupt()
-//             .attr('class', d => 'cel iframe')
-//           .transition()
-//             .duration(100)
-//             .delay(d => d.delay)
-//             .style('opacity', 0)
-//           .transition()
-//             .delay(2000)
-//           //   .duration(100)
-//             // .text(d => d.text)
-//             // .style('color', d => d.color || null)
-//             .style('opacity', 1)
-//             .on('end', d => {
-//               d.active = false;
-//               delete d.delay;
-//             })
-//           .end()
-
-
-
   };
 
 
-  async iframeGetCels({ startCol, endCol, startRow, endRow}) {
-    return this.gridText.filter(a =>
+  async iframeGetCels({ startCol, endCol, startRow, endRow }) {
+    const cels = this.gridText.filter(a =>
       a.c >= startCol && a.c < endCol
       &&
       a.r >= startRow && a.r < endRow
     );
+    cels.forEach(d => {
+      d.active = true;
+      d.delay = this.proto.randomDelay() * 3;
+      d.hidden = true;
+    });
+
+    return cels;
   };
 
 
   async iframeSetStyle(corners) {
     const c1 = d3.select('#' + corners[0].id).node();
     const c2 = d3.select('#' + corners[1].id).node();
-    // const left = c1.offsetLeft + this.params.marginX;
-    // const top = c1.offsetTop;
-    // const width = c2.offsetWidth + c2.offsetLeft - c1.offsetLeft;
-    // const height = c2.offsetHeight + c2.offsetTop - c1.offsetTop;
-    return this.params.iframeStyle = {
+
+    return {
       left: c1.offsetLeft + this.params.marginX + 'px',
-      top: c1.offsetTop + 'px',
+      top: c1.offsetTop + (c1.offsetHeight * (1 / 3)) + 'px',
       width: c2.offsetWidth + c2.offsetLeft - c1.offsetLeft + 'px',
       height: c2.offsetHeight + c2.offsetTop - c1.offsetTop + 'px',
     };
   };
 
 
+  async helpIframe(value) {
+    const { date, git, name, ratio, tech, url } = this.proto.iframes[value];
+    const dimen = await this.iframeGetSize(ratio);
+    const hidden = await this.iframeGetCels(dimen);
+    const corners = [hidden[0], hidden[hidden.length - 1]];
+    this.params.iframeStyle = await this.iframeSetStyle(corners);
+    const masked = this.gridText.filter(a => a.static)
+      .map(d => {
+        d.masked = true;
+        // this.drawGridLetterSwap(d);
+        return d;
+      });
+    this.queue = { hidden, masked };
+    this.setState({ iframe: value });
+  };
+
+
+
+  async showIframe(cels) {
+    const { hidden, masked } = this.queue;
+    await Promise.all(masked.map(d => {
+      this.drawGridLetterSwap(d);
+    }));
+    await this.drawGridCustom(this.queue);
+
+    // await this.drawGridHide(cels);
+    // const queue = await this.removeTextAll();
+    // const st = this.gridText.filter(a => a.static);
+
+    // const queue = []
+    // await this.drawGridCustom(this.queue);
+    // this.setState({ iframeReady: true });
+  };
+
+
+  async clearIframe() {
+    console.log('clear')
+    this.setState({ iframeLoaded: false, iframe: false }, async () => {
+      const st = await Promise.all(
+        Object.values(this.content)
+          .map(d => this.addTextStatic(d))
+      );
+      const { hidden, masked } = this.queue;
+      hidden.forEach(d => {
+        delete d.hidden;
+      });
+      masked.forEach(d => {
+        delete d.masked;
+      })
+      await this.drawGridCustom([...st, ...masked])
+
+
+
+    })
+
+
+//     this.setState({ iframeLoaded: false, iframe: false }, async () => {
+//         // this.config(this.grid.current)
+//           // .then(() => this.draw())
+//     const st = await Promise.all(
+//       Object.values(this.content)
+//         .map(d => this.addTextStatic(d))
+//     );
+//     console.log('st', st)
+// this.setState({ iframeLoaded: true}, () => this.drawGridCustom(st))
+
+
+//     const dynamic = await Promise.all(
+//       Object.keys(this.state.active).map(cl => {
+//         if (!this.state.active[cl]) return null;
+//         return this.addTextDynamic(this.content[cl]);
+//       })
+//     );
+//     // console.log('st', st.flat())
+//     this.hidden.forEach(d => {
+//       delete d.hidden;
+//       // d.delay = 100
+//     });
+
+//     console.log('hidden', this.hidden)
+
+//     const cels = [...st.flat(), ...dynamic.flat()].filter(a => !!a)
+//     // console.log(cels)
+//     // const hidden = this.gridText.filter(a => a.hidden);
+//     // console.log('cels', st, dynamic, hidden)
+//     console.log('static', ...st.flat())
+//     this.drawGridCustom(this.hidden)
+//       // .then(() => this.drawGridCustom(cels))
+
+//     // return
+//     //   .then(() => Promise.all(
+//     //     Object.keys(this.state.active).map(cl => {
+//     //       if (!this.state.active[cl]) return null;
+//     //       return this.addTextDynamic(this.content[cl]);
+//     //     })
+//     //   ))
+//     //   .then(() => this.drawGridFull())
+//     //   .catch(err => console.error('drawStackHasDrawn()', err))
+
+//     // const cels = this.gridText.filter(a => a.hidden);
+//     // cels.forEach(d => {
+//     //   d.active = true;
+//     //   d.hidden = false;
+//     //   d.delay = this.proto.randomDelay() * 3;
+//     // })
+//     // this.drawGridCustom(cels);
+
+//     })
+
+  };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // ** Handler Helpers ** //
 ////////////////////////////////////////////////////////////////////////////////
+
 
   helpRedraw() {
     return setTimeout(() => {
@@ -563,10 +746,10 @@ export default class App extends PureComponent {
 
 
   helpCombinedHover(cel) {
-    if (cel.active) return null;
+    if (cel.active || cel.hidden) return null;
 
-    if (!cel.static) {
-      this.drawGridLetterSwap(cel);
+    if (!cel.static || cel.masked) {
+      return this.drawGridLetterSwap(cel);
     } else if (cel.activeCl) {
       this.helpToggleDynamicText(cel.activeCl);
     };
@@ -595,33 +778,17 @@ export default class App extends PureComponent {
               window.getSelection().removeAllRanges();
             };
           }
-        ))
+        ));
     };
-  };
-
-
-  async helpIframe(data) {
-    const { date, git, name, ratio, tech, url } = data;
-    const dimen = await this.iframeGetSize(data);
-    const cels = await this.iframeGetCels(dimen);
-    const corners = [cels[0], cels[cels.length - 1]];
-    const style = await this.iframeSetStyle(corners);
-
-    console.log('data', data)
-    console.log('corners', style, corners)
-
-    // this.iframeGetSize(data)
-    //   .then(dimen => this.iframeGetCels(dimen))
-    //   .then(cels => {
-    //     console.log(cels)
-    //   })
-
   };
 
 
   helpClick(cel) {
     if (cel.action) {
       return this.helpClickAction(cel)
+    };
+    if (this.state.iframe) {
+      return this.clearIframe();
     };
     if (this.props.isMobile) {
       this.helpCombinedHover(cel);
@@ -638,7 +805,7 @@ export default class App extends PureComponent {
       window.location.href = value;
     };
     if (action === 'iframe') {
-      this.helpIframe(iframes[value]);
+      this.helpIframe(value);
     };
   };
 
@@ -701,7 +868,67 @@ export default class App extends PureComponent {
   };
 
 
+  handleIframeLoad(e) {
+    this.setState({ iframeLoaded: true }, () => {
+      this.showIframe(this.queue);
+    });
+  };
 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ** Getters ** //
+////////////////////////////////////////////////////////////////////////////////
+
+
+  get gridStyle() {
+    if (!this.state.hasConfig) return null;
+    return {
+      fontSize: this.params.celHeight.toFixed(2) + 'px',
+      marginLeft: this.params.marginX + 'px',
+      marginTop: this.props.isMobile
+        ? null
+        : this.params.marginY + 'px',
+    };
+  };
+
+
+  get mainStyle() {
+    if (!this.props.isMobile) return null;
+    return {
+      width: '100%',
+      height: '100%',
+      userSelect: 'none !important',
+    };
+  };
+
+
+  get iframeBoxStyle() {
+    const { iframe, iframeLoaded } = this.state;
+    if (!iframe) return null;
+    return {
+      ...this.params.iframeStyle,
+      opacity: iframeLoaded ? 1 : null,
+      pointerEvents: 'auto',
+      zIndex: iframeLoaded ? 300 : null,
+    };
+  };
+
+
+  get iframeStyle() {
+    if (!this.state.iframe) return null;
+    return {
+      transform: `scale(${this.proto.iframes[this.state.iframe].scale})`,
+    };
+  };
+
+
+  get iframeUrl() {
+    if (!this.state.iframe) return null;
+    return this.proto.iframes[this.state.iframe].url;
+  };
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -709,6 +936,8 @@ export default class App extends PureComponent {
 ////////////////////////////////////////////////////////////////////////////////
 
   render() {
+    const { iframe } = this.state;
+
     return (
       <div id="App">
         <div
@@ -718,7 +947,16 @@ export default class App extends PureComponent {
           onClick={this.handleClick}
         >
           <div id="Grid" ref={this.grid} style={this.gridStyle} />
-          <div id="Iframe" ref={this.iframe} style={this.iframeStyle} />
+          <div id="IframeBox" ref={this.iframe} style={this.iframeBoxStyle}>
+            <iframe
+              src={this.iframeUrl}
+              style={this.iframeStyle}
+              onLoad={this.handleIframeLoad}
+              allow="camera;microphone"
+              title="project"
+              scrolling="no"
+            />
+          </div>
         </div>
       </div>
     );

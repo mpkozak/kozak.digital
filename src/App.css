@@ -32,9 +32,9 @@
   font-size: inherit;
   color: #4A4B4D;
   text-align: center;
-  background-color: rgba(0,0,0,0);
-  border: 1px solid red;
-  /*alignment-baseline: text-after-edge;*/
+  background: transparent;
+  /*background-color: rgba(0,0,0,0);*/
+  z-index: 200;
 }
 
 #Grid>.cel.projects {
@@ -52,15 +52,35 @@
   user-select: text;
 }
 
-#Iframe {
+#IframeBox {
   position: absolute;
-  /*left: 20px;*/
-  /*top: 20px;*/
-  /*width: 100px;*/
-  /*height: 100px;*/
-  opacity: .5;
+  /*left: 50%;*/
+  /*top: 50%;*/
+  /*width: 0%;*/
+  /*height: 0%;*/
+  /*padding: 1%;*/
+  /*transform: scale(1.26);*/
+  opacity: 0;
   pointer-events: none;
-
-  background-color: orange;
+  z-index: 100;
+  overflow: hidden;
+  transition: opacity 1s;
+  /*padding: 1%;*/
+  border-radius: .5vmin;
+  transform: scale(.99)translateY(2px);
 }
+
+#IframeBox>iframe {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: none;
+  /*transform: scale(0);*/
+  /*transition: transform 2s;*/
+}
+
+
+
+
+
 
