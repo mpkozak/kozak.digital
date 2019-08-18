@@ -12,11 +12,11 @@ export default class App extends PureComponent {
     super(props);
     this.state = {
       hasConfig: false,
-      hasDrawn: false,
+      hasDrawn: true,
       isResizing: false,
       active: {
         skills: false,
-        projects: false,
+        projects: true,
         links: false,
         contact: false,
       },
@@ -34,6 +34,7 @@ export default class App extends PureComponent {
       },
     };
     this.grid = React.createRef();
+    this.iframe = React.createRef();
     this.params = {};
     this.content = {};
     this.gridText = [];
@@ -95,7 +96,13 @@ export default class App extends PureComponent {
     };
   };
 
-
+  get iframeStyle() {
+    if (!this.state.iframe) return null;
+    return {
+      ...this.params.iframeStyle,
+      opacity: 1,
+    };
+  }
 
 
 
@@ -150,6 +157,8 @@ export default class App extends PureComponent {
       this.params.celWidth = maxCelHeight * celRatio;
     };
 
+    // this.params.celHeight = Math.round(this.params.celHeight);
+    // this.params.celWidth = Math.round(this.params.celWidth);
     return;
   };
 
@@ -321,7 +330,7 @@ export default class App extends PureComponent {
         ? this.drawStackHasDrawn()
         : this.drawStackInitial()
       )
-      .catch(err => console.error('draw()', err))
+      .catch(err => console.error('draw()', err));
   };
 
 
@@ -335,7 +344,7 @@ export default class App extends PureComponent {
         cels.map(d => this.drawGridCustom(d))
       ))
       .then(() => this.setState({ hasDrawn: true }))
-      .catch(err => console.error('drawStackInitial()', err))
+      .catch(err => console.error('drawStackInitial()', err));
   };
 
 
@@ -433,7 +442,7 @@ export default class App extends PureComponent {
 
 
   async undrawGridFull() {
-    const randomDelay = () => Math.floor(Math.random() * 250)
+    const randomDelay = () => Math.floor(Math.random() * 250);
 
     return (
       d3.select(this.grid.current)
@@ -461,7 +470,80 @@ export default class App extends PureComponent {
 // ** Iframe Methods ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+  async iframeGetSize(ratio) {
+    const { cols, rows } = this.params;
+    const { celRatio } = this.proto;
 
+    const maxW = cols - 8;
+    const maxH = rows - 8;
+
+    let h = maxH;
+    let w = (maxH / celRatio) * ratio;
+
+    if (w > maxW) {
+      w = maxW;
+      h = (maxW * celRatio) / ratio;
+    };
+
+    const gridW = Math.round(w);
+    const gridH = Math.round(h);
+
+    const startCol = Math.round((cols - gridW) / 2);
+    const endCol = startCol + gridW;
+    const startRow = 3;
+    const endRow = startRow + gridH;
+
+    return { startCol, endCol, startRow, endRow };
+
+//       d3.select(this.grid.current)
+//         .selectAll('div').data(cels, d => d.id)
+//           // .each(d => d.active = true)
+//           // .interrupt()
+//             .attr('class', d => 'cel iframe')
+//           .transition()
+//             .duration(100)
+//             .delay(d => d.delay)
+//             .style('opacity', 0)
+//           .transition()
+//             .delay(2000)
+//           //   .duration(100)
+//             // .text(d => d.text)
+//             // .style('color', d => d.color || null)
+//             .style('opacity', 1)
+//             .on('end', d => {
+//               d.active = false;
+//               delete d.delay;
+//             })
+//           .end()
+
+
+
+  };
+
+
+  async iframeGetCels({ startCol, endCol, startRow, endRow}) {
+    return this.gridText.filter(a =>
+      a.c >= startCol && a.c < endCol
+      &&
+      a.r >= startRow && a.r < endRow
+    );
+  };
+
+
+  async iframeSetStyle(corners) {
+    const c1 = d3.select('#' + corners[0].id).node();
+    const c2 = d3.select('#' + corners[1].id).node();
+    // const left = c1.offsetLeft + this.params.marginX;
+    // const top = c1.offsetTop;
+    // const width = c2.offsetWidth + c2.offsetLeft - c1.offsetLeft;
+    // const height = c2.offsetHeight + c2.offsetTop - c1.offsetTop;
+    return this.params.iframeStyle = {
+      left: c1.offsetLeft + this.params.marginX + 'px',
+      top: c1.offsetTop + 'px',
+      width: c2.offsetWidth + c2.offsetLeft - c1.offsetLeft + 'px',
+      height: c2.offsetHeight + c2.offsetTop - c1.offsetTop + 'px',
+    };
+  };
 
 
 
@@ -500,8 +582,7 @@ export default class App extends PureComponent {
         ({ active: { ...prevState.active, [cl]: now } }),
         () => this.addTextDynamic(this.content[cl])
           .then(queue => this.drawGridCustom(queue))
-          .catch(err => console.log('helpToggleDynamicText(cl) caught', err))
-
+          .catch(err => console.log('helpToggleDynamicText() caught', err))
       );
     } else if (now - active > 500) {
       this.removeTextDynamic(cl)
@@ -516,6 +597,25 @@ export default class App extends PureComponent {
           }
         ))
     };
+  };
+
+
+  async helpIframe(data) {
+    const { date, git, name, ratio, tech, url } = data;
+    const dimen = await this.iframeGetSize(data);
+    const cels = await this.iframeGetCels(dimen);
+    const corners = [cels[0], cels[cels.length - 1]];
+    const style = await this.iframeSetStyle(corners);
+
+    console.log('data', data)
+    console.log('corners', style, corners)
+
+    // this.iframeGetSize(data)
+    //   .then(dimen => this.iframeGetCels(dimen))
+    //   .then(cels => {
+    //     console.log(cels)
+    //   })
+
   };
 
 
@@ -538,8 +638,7 @@ export default class App extends PureComponent {
       window.location.href = value;
     };
     if (action === 'iframe') {
-      const data = iframes[value];
-      console.log('iframe', data)
+      this.helpIframe(iframes[value]);
     };
   };
 
@@ -612,12 +711,14 @@ export default class App extends PureComponent {
   render() {
     return (
       <div id="App">
-        <div id="Main"
+        <div
+          id="Main"
           style={this.mainStyle}
           onMouseMove={this.handleMouseMove}
           onClick={this.handleClick}
         >
           <div id="Grid" ref={this.grid} style={this.gridStyle} />
+          <div id="Iframe" ref={this.iframe} style={this.iframeStyle} />
         </div>
       </div>
     );

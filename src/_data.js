@@ -152,31 +152,18 @@ export const content = (layout = 'desktop') => {
       activeCl: 'skills',
       onHover: {
         color: '#2BB62B',
-        data: layout === 'mobileH'
-          ? [
-              { str: 'javascript' },
-              { str: 'react' },
-              { str: 'd3+svg' },
-              { str: 'webaudio api' },
-              { str: 'node' },
-              { str: 'express' },
-              { str: 'sql' },
-              { str: 'bash' },
-              { str: 'html' },
-              { str: 'css' },
-            ]
-          : [
-              { str: 'css' },
-              { str: 'html' },
-              { str: 'bash' },
-              { str: 'sql' },
-              { str: 'express' },
-              { str: 'node' },
-              { str: 'webaudio api' },
-              { str: 'd3+svg' },
-              { str: 'react' },
-              { str: 'javascript' },
-            ]
+        data: [
+          { str: 'css' },
+          { str: 'html' },
+          { str: 'bash' },
+          { str: 'sql' },
+          { str: 'express' },
+          { str: 'node' },
+          { str: 'webaudio api' },
+          { str: 'd3+svg' },
+          { str: 'react' },
+          { str: 'javascript' },
+        ],
       },
     },
     projects: {
@@ -268,6 +255,10 @@ export const content = (layout = 'desktop') => {
         ],
       },
     },
+  };
+
+  if (layout === 'mobileH') {
+    data.skills.onHover.data = data.skills.onHover.data.reverse();
   };
 
   Object.keys(layouts[layout]).forEach(key => {
