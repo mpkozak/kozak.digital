@@ -188,6 +188,10 @@ export default class App extends PureComponent {
 
     this.content = setContent(this.params.layout);
 
+    if (this.params.layout === 'mobileV') {
+      window.scrollTo(0, -5);
+    };
+
     return;
   };
 
@@ -221,8 +225,6 @@ export default class App extends PureComponent {
   async configGridSize({ gridWidth, gridHeight, celWidth, celHeight }) {
     this.params.cols = Math.floor(gridWidth / celWidth);
     this.params.rows = Math.floor(gridHeight / celHeight);
-    // this.params.marginX = (gridWidth - this.params.cols * celWidth) / 2;
-    // this.params.marginY = (gridHeight - this.params.rows * celHeight) / 2;
     this.params.marginX = Math.round((gridWidth - this.params.cols * celWidth) / 2);
     this.params.marginY = Math.round((gridHeight - this.params.rows * celHeight) / 2);
 
@@ -309,18 +311,15 @@ export default class App extends PureComponent {
 
       const cel = this.gridText[startIndex + i];
       cel.active = true;
+      cel.static = true;
       cel.text = char;
       cel.color = color;
-      cel.static = true;
       if (!hasDrawn) {
         cel.delay =
           delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
       };
       if (activeCl) {
         cel.activeCl = activeCl;
-      };
-      if (cel.hidden) {
-        delete cel.hidden;
       };
 
       queue.push(cel);
@@ -350,13 +349,13 @@ export default class App extends PureComponent {
 
       d.str.split('').forEach((char, j) => {
         if (char === ' ') return null;
-        const cel = this.gridText[startIndex + j];
 
+        const cel = this.gridText[startIndex + j];
         cel.active = true;
+        cel.static = true;
         cel.cl = activeCl;
         cel.text = char;
         cel.color = color;
-        cel.static = true;
         cel.delay =
           Math.floor(((queue.length / total) + Math.random()) * 250);
         if (d.action) {
@@ -406,6 +405,15 @@ export default class App extends PureComponent {
 
   async draw() {
     return this.addTextInitial()
+      // .then(() => {
+      //   if (!this.state.hasDrawn) {
+      //     return this.drawStackInitial();
+      //   };
+      //   if (!this.state.iframe) {
+      //     return this.drawStackHasDrawn();
+      //   };
+      //   return this.drawStackIframe();
+      // })
       .then(() => this.state.hasDrawn
         ? this.drawStackHasDrawn()
         : this.drawStackInitial()
@@ -430,6 +438,30 @@ export default class App extends PureComponent {
       .then(() => this.addTextDynamicAll())
       .then(() => this.drawGridFull())
       .catch(err => console.error('drawStackHasDrawn()', err));
+  };
+
+
+  async drawStackIframe() {
+    // const { iframe } = this.state;
+    // this.setState({ iframe: false }, async () => {
+      await this.addTextStaticAll();
+      await this.addTextDynamicAll();
+      this.grid.current.style.opacity = 0;
+      await this.drawGridFull();
+      await this.helpIframe(this.state.iframe)
+      await this.showIframe();
+      this.grid.current.style.opacity = 1;
+      // this.setState({ iframe });
+    // });
+
+
+
+    // this.addTextStaticAll()
+    // return this.addTextStaticAll()
+
+    //   .then(() => this.addTextDynamicAll())
+    //   .then(() => this.drawGridFull())
+    //   .catch(err => console.error('drawStackHasDrawn()', err));
   };
 
 
@@ -626,16 +658,13 @@ export default class App extends PureComponent {
 
 
   async helpIframe(value) {
-    console.time('help iframe')
     const { ratio } = this.proto.iframes[value];
     const dimen = await this.iframeGetSize(ratio);
     const hidden = await this.iframeGetHiddenCels(dimen);
-
     const corners = [hidden[0], hidden[hidden.length - 1]];
     this.params.iframeStyle = await this.iframeSetStyle(corners);
     const masked = await this.iframeGetMaskedCels();
     this.queue = [...hidden, ...masked];
-    console.timeEnd('help iframe')
     this.setState({ iframe: value });
   };
 
@@ -649,7 +678,7 @@ export default class App extends PureComponent {
     this.setState({ iframeLoaded: false }, async () => {
       const queue = await Promise.all(this.queue.map(d => {
         d.active = true;
-        d.delay = this.proto.randomDelay();
+        d.delay = this.proto.randomDelay() * 3;
         if (d.hidden) {
           delete d.hidden;
         } else if (d.masked) {
@@ -672,18 +701,29 @@ export default class App extends PureComponent {
 
   helpRedraw() {
     return setTimeout(() => {
+      // this.setState(
+      //   { isResizing: false, iframeLoaded: false },
+      //   async () => {
+      //     await this.config();
+      //     await this.draw();
+      //     // if (iframe) {
+      //     //   await this.helpIframe(iframe);
+      //     // };
+      //   }
+      // );
+
       const { iframe } = this.state;
       this.setState(
         { isResizing: false, iframe: false, iframeLoaded: false },
         async () => {
-          await this.config(this.grid.current);
+          await this.config();
           await this.draw();
           if (iframe) {
             await this.helpIframe(iframe);
           };
         }
       );
-    }, 500);
+    }, this.props.isMobile ? 0 : 500);
 
 
 
@@ -849,9 +889,7 @@ export default class App extends PureComponent {
       fontSize: this.params.celHeight + 'px',
       lineHeight: (this.params.celHeight * .9).toFixed(2) + 'px',
       marginLeft: this.params.marginX + 'px',
-      marginTop: this.props.isMobile
-        ? null
-        : this.params.marginY + 'px',
+      marginTop: this.params.marginY + 'px',
     };
   };
 
