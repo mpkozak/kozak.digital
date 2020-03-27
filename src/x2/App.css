@@ -1,0 +1,73 @@
+#App {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+#Main {
+  position: relative;
+  width: calc(100% - 5vmin);
+  height: calc(100% - 5vmin);
+  cursor: default;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+
+
+#Grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+#Grid>.cel {
+  position: absolute;
+  font-size: inherit;
+  color: #4A4B4D;
+  text-align: center;
+  background: transparent;
+  z-index: 200;
+}
+
+#Grid>.cel.projects {
+  cursor: zoom-in;
+}
+
+#Grid>.cel.links, #Grid>.cel.info {
+  cursor: pointer;
+}
+
+#Grid>.cel.contact {
+  cursor: text;
+  -webkit-touch-callout: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+
+
+#IframeBox {
+  position: absolute;
+  border-radius: .5vmin;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+  transform: scale(0);
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#IframeBox>iframe {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
