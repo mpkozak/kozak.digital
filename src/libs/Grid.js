@@ -48,6 +48,15 @@ export default class Grid {
     return Math.floor(Math.random() * 250);
   };
 
+  get gridStyle() {
+    return {
+      fontSize: this.celHeight + 'px',
+      lineHeight: (this.celHeight * .9).toFixed(2) + 'px',
+      marginLeft: this.marginX + 'px',
+      marginTop: this.marginY + 'px',
+    };
+  };
+
 
 
 
@@ -60,21 +69,31 @@ export default class Grid {
 */
 
   init() {
+    this.gridText = [];
     this.initGrid();
     this.initContent();
     this.initText();
-    this._initial = false;
-    this.drawGridFull();
+    this.draw();
   };
+
+  reInit() {
+
+  }
 
 
   initGrid() {
+    Object.keys(this.gridStyle).forEach(key => this._gridRef.style[key] = '');
     const { clientWidth, clientHeight } = this._gridRef;
     this.displayLayout = !this._isMobile
       ? 'desktop'
       : clientWidth > clientHeight
         ? 'mobileH'
         : 'mobileV';
+
+    if (this.displayLayout !== 'desktop') {
+      window.scrollTo(0, -5);
+    };
+    // alert(this.displayLayout)
 
     const [minCols, minRows] = this._minGrid[this.displayLayout];
     const w = clientWidth / minCols;
@@ -99,6 +118,13 @@ export default class Grid {
     this.rows = Math.floor(clientHeight / this.celHeight);
     this.marginX = Math.round((clientWidth - this.cols * this.celWidth) / 2);
     this.marginY = Math.round((clientHeight - this.rows * this.celHeight) / 2);
+
+    Object.entries(this.gridStyle).forEach(([key, val]) => this._gridRef.style[key] = val);
+    // this._gridRef.style.fontSize = this.celHeight + 'px';
+    // this._gridRef.style.lineHeight = (this.celHeight * .9).toFixed(2) + 'px';
+    // this._gridRef.style.marginLeft = this.marginX + 'px';
+    // this._gridRef.style.marginTop = this.marginY + 'px';
+    // console.log(this.gridStyle.toString())
   };
 
 
@@ -163,6 +189,73 @@ export default class Grid {
 
 
 
+/*
+    Text stack
+*/
+
+  addTextStatic({ str, color, delay, activeCl, startIndex }) {
+    const queue = [];
+
+    str.split('').forEach((char, i) => {
+      if (char === ' ') return null;
+
+      const cel = this.gridText[startIndex + i];
+      cel.active = true;
+      cel.static = true;
+      cel.text = char;
+      cel.color = color;
+      if (this._initial) {
+        cel.delay =
+          delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
+      };
+      if (activeCl) {
+        cel.activeCl = activeCl;
+      };
+
+      queue.push(cel);
+    });
+
+    return queue;
+  };
+
+
+  addTextStaticAll() {
+    return Object.values(this.content)
+      .map(d => this.addTextStatic(d));
+  };
+
+
+  addTextDynamic({ activeCl, onHover: { color, data, total } }) {
+    const queue = [];
+
+    data.forEach((d, i) => {
+      const startIndex = d.startIndex + (
+        this._isMobile
+          ? Math.round(1 * (Math.random() - .5))
+          : Math.round(3 * (Math.random() - .5))
+      );
+
+      d.str.split('').forEach((char, j) => {
+        if (char === ' ') return null;
+
+        const cel = this.gridText[startIndex + j];
+        cel.active = true;
+        cel.static = true;
+        cel.cl = activeCl;
+        cel.text = char;
+        cel.color = color;
+        cel.delay = Math.floor(((queue.length / total) + Math.random()) * 250);
+        if (d.action) {
+          cel.action = d.action;
+        };
+
+        queue.push(cel);
+      });
+    });
+
+    return queue;
+  };
+
 
 
 
@@ -170,6 +263,38 @@ export default class Grid {
     Draw stack
 */
 
+
+  async draw() {
+    if (this._initial) {
+      return this.drawStackInitial();
+    };
+    this.drawStack();
+
+    // console.log('drawn', drawn)
+  }
+
+
+  async drawStackInitial() {
+    await this.drawGridFull();
+    const staticText = this.addTextStaticAll();
+    await Promise.all(staticText.map(d => this.drawGridCustom(d)));
+    this._initial = false;
+  };
+
+
+  async drawStack() {
+    const staticText = this.addTextStaticAll();
+    await this.drawGridFull();
+  };
+
+
+  async undraw() {
+    try {
+      await this.undrawGridFull();
+    } catch (err) {
+      this.eraseGrid();
+    };
+  };
 
 
 
@@ -201,6 +326,65 @@ export default class Grid {
   };
 
 
+  drawGridCustom(cels) {
+    return this._gridNode
+      .selectAll('div')
+        .data(cels, d => d.id)
+      .interrupt()
+        .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
+      .transition()
+        .duration(100)
+        .delay(d => d.delay || this.randomDelay)
+        .style('opacity', 0)
+      .transition()
+        .duration(100)
+        .text(d => d.text)
+        .style('color', d => d.color || null)
+        .style('opacity', d => d.hidden ? 0 : 1)
+        .on('end', d => {
+          d.active = false;
+          delete d.delay;
+        })
+      .end();
+    };
+
+
+  drawGridLetterSwap(cel) {
+    cel.text = this.randomLetter;
+    return this._gridNode
+      .select(`#${cel.id}`)
+        .datum(cel, d => d.id)
+      .interrupt()
+        .attr('class', 'cel')
+      .transition()
+        .style('opacity', 0)
+      .transition()
+        .delay(100)
+        .text(cel.text)
+        .style('color', null)
+        .style('opacity', 1);
+  };
+
+
+  undrawGridFull() {
+    return this._gridNode
+      .selectAll('div')
+        .data(this.gridText, d => d.id)
+      .interrupt()
+      .transition()
+        .duration(100)
+        .delay(() => this.randomDelay)
+        .style('opacity', 0)
+        .remove()
+      .end();
+  };
+
+
+  eraseGrid() {
+    this._gridNode
+      .selectAll('div')
+        .remove();
+  };
 
 
 

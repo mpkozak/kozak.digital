@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import d3 from './libs/d3';
+import d3 from '../libs/d3';
 import './App.css';
-import { getContent, gridRules, iframes } from './global';
+import { getContent, gridRules, iframes } from '../global';
 
 
 
@@ -23,17 +23,19 @@ export default class App extends PureComponent {
       iframe: false,
       iframeLoaded: false,
     };
-    this.proto = {
-      alpha: ('qwertyuiopasdfghjklzxcvbnm').split(''),
-      randomLetter: () => this.proto.alpha[Math.floor(Math.random() * 26)],
-      randomDelay: () => Math.floor(Math.random() * 250),
-    };
-    this.grid = React.createRef();
+    this._alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
+
+
+    this._gridRef = React.createRef();
+    this._gridNode = undefined;
+
+
     this.params = {};
     this.content = {};
     this.gridText = [];
 
     this.iframeBoxLayout = {};
+    this.iframeQueue = [];
 
     this.resizeTimeout = undefined;
     this.lastMouseEvent = 0;
@@ -50,15 +52,81 @@ export default class App extends PureComponent {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// ** Lifecycle Methods ** //
+// ** Getters ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+  get gridStyle() {
+    if (!this.state.hasConfig) return null;
+    return {
+      fontSize: this.params.celHeight + 'px',
+      lineHeight: (this.params.celHeight * .9).toFixed(2) + 'px',
+      marginLeft: this.params.marginX + 'px',
+      marginTop: this.params.marginY + 'px',
+    };
+  };
+
+  get mainStyle() {
+    if (!this.props.isMobile) return null;
+    return {
+      width: '100%',
+      height: '100%',
+      userSelect: 'none !important',
+    };
+  };
+
+  get iframeBoxStyle() {
+    const { iframe, iframeLoaded, isResizing } = this.state;
+    if (!iframe) return null;
+    const style = {...this.iframeBoxLayout};
+    if (isResizing) {
+      return style;
+    };
+    if (iframeLoaded) {
+      return Object.assign(style, {
+        transform: 'scale(.99)',
+        opacity: 1,
+        pointerEvents: 'auto',
+        zIndex: 300,
+      });
+    };
+    return style;
+  };
+
+  get iframeStyle() {
+    if (!this.state.iframe) return null;
+    return {
+      transform: `scale(${iframes[this.state.iframe].scale})`,
+    };
+  };
+
+  get iframeUrl() {
+    if (!this.state.iframe) return null;
+    return iframes[this.state.iframe].url;
+  };
+
+  get randomLetter() {
+    return this._alpha[Math.floor(Math.random() * 26)];
+  };
+
+  get randomDelay() {
+    return Math.floor(Math.random() * 250);
+  };
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ** Lifecycle Methods ** //
+////////////////////////////////////////////////////////////////////////////////
 
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
     if (this.props.isMobile) {
       window.addEventListener('touchmove', this.handleTouchMove, { passive: false });
     };
+    this._gridNode = d3.select(this._gridRef.current);
     this.config();
     this.draw();
   };
@@ -71,10 +139,8 @@ export default class App extends PureComponent {
 // ** Layout Configuration ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
   config() {
-    const { displayLayout, ...params } = this.configParams(this.grid.current);
+    const { displayLayout, ...params } = this.configParams(this._gridRef.current);
     this.params = params;
     if (displayLayout === 'mobileV') {
       window.scrollTo(0, -5);
@@ -118,6 +184,9 @@ export default class App extends PureComponent {
     const rows = Math.floor(clientHeight / celHeight);
     const marginX = Math.round((clientWidth - cols * celWidth) / 2);
     const marginY = Math.round((clientHeight - rows * celHeight) / 2);
+
+    document.documentElement.style.setProperty('--cel-width', celWidth + 'px');
+    document.documentElement.style.setProperty('--cel-height', celHeight + 'px');
 
     return {
       displayLayout,
@@ -164,8 +233,7 @@ export default class App extends PureComponent {
 // ** Grid Text ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-  async addTextInitial() {
+  addTextInitial() {
     const { cols, rows } = this.params;
     const dScale = this.props.isMobile ? 60 : 100;
     const tScalar = 250 / (rows * cols);
@@ -188,7 +256,7 @@ export default class App extends PureComponent {
           c,
           r,
           id: `cel${id++}`,
-          text: this.proto.randomLetter(),
+          text: this.randomLetter,
           delay: this.state.hasDrawn
             ? Math.floor(500 * Math.random())
             : calcDelay(r, c),
@@ -201,7 +269,7 @@ export default class App extends PureComponent {
   };
 
 
-  async addTextStatic({ str, color, delay, activeCl, startIndex }) {
+  addTextStatic({ str, color, delay, activeCl, startIndex }) {
     const { hasDrawn } = this.state;
 
     const queue = [];
@@ -215,10 +283,10 @@ export default class App extends PureComponent {
       cel.text = char;
       cel.color = color;
       if (!hasDrawn) {
-        cel.delay =
-          delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
+        cel.delay = delay + Math.floor((i / str.length) * 50 + 200 * Math.random());
       };
       if (activeCl) {
+        cel.cl = 'menu';
         cel.activeCl = activeCl;
       };
 
@@ -229,15 +297,13 @@ export default class App extends PureComponent {
   };
 
 
-  async addTextStaticAll() {
-    return Promise.all(
-      Object.values(this.content)
-        .map(d => this.addTextStatic(d))
-    );
+  addTextStaticAll() {
+    return Object.values(this.content)
+      .map(d => this.addTextStatic(d));
   };
 
 
-  async addTextDynamic({ activeCl, onHover: { color, data, total } }) {
+  addTextDynamic({ activeCl, onHover: { color, data, total } }) {
     const queue = [];
 
     data.forEach((d, i) => {
@@ -270,29 +336,27 @@ export default class App extends PureComponent {
   };
 
 
-  async addTextDynamicAll() {
-    return Promise.all(
-      Object.keys(this.state.active).map(cl => {
+  addTextDynamicAll() {
+    return Object.keys(this.state.active)
+      .map(cl => {
         if (!this.state.active[cl]) return null;
         return this.addTextDynamic(this.content[cl]);
-      })
-    );
+      });
   };
 
 
-  async removeTextDynamic(cl) {
+  removeTextDynamic(cl) {
     const cels = this.gridText.filter(a => a.cl === cl);
-    return Promise.all(
-      cels.map((d, i, a) => {
-        d.text = this.proto.randomLetter();
-        d.active = true;
-        d.delay =
-          Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
-        ['cl', 'activeCl', 'color', 'static', 'action'].forEach(key => delete d[key]);
-        return d;
-      })
-    );
+    return cels.map((d, i, a) => {
+      d.text = this.randomLetter;
+      d.active = true;
+      d.delay =
+        Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
+      ['cl', 'activeCl', 'color', 'static', 'action'].forEach(key => delete d[key]);
+      return d;
+    });
   };
+
 
 
 
@@ -304,40 +368,47 @@ export default class App extends PureComponent {
 
 
   async draw() {
-    return this.addTextInitial()
-      // .then(() => {
-      //   if (!this.state.hasDrawn) {
-      //     return this.drawStackInitial();
-      //   };
-      //   if (!this.state.iframe) {
-      //     return this.drawStackHasDrawn();
-      //   };
-      //   return this.drawStackIframe();
-      // })
-      .then(() => this.state.hasDrawn
-        ? this.drawStackHasDrawn()
-        : this.drawStackInitial()
-      )
-      .catch(err => console.error('draw()', err));
+    this.addTextInitial();
+    try {
+      if (this.state.hasDrawn) {
+        await this.drawStackHasDrawn();
+        return;
+      };
+      await this.drawStackInitial();
+      return;
+    } catch (err) {
+      console.error('draw()', err);
+      return null;
+    };
   };
 
 
   async drawStackInitial() {
-    return this.drawGridFull()
-      .then(() => this.addTextStaticAll())
-      .then(cels => Promise.all(
-        cels.map(d => this.drawGridCustom(d))
-      ))
-      .then(() => this.setState({ hasDrawn: true }))
-      .catch(err => console.error('drawStackInitial()', err));
+    try {
+      await this.drawGridFull();
+      const staticText = this.addTextStaticAll();
+      await Promise.all(staticText.map(d => this.drawGridCustom(d)));
+      this.setState({ hasDrawn: true });
+    } catch (err) {
+      console.error('drawStackInitial()', err);
+      return null;
+    };
   };
 
 
   async drawStackHasDrawn() {
-    return this.addTextStaticAll()
-      .then(() => this.addTextDynamicAll())
-      .then(() => this.drawGridFull())
-      .catch(err => console.error('drawStackHasDrawn()', err));
+    try {
+      this.addTextStaticAll();
+      this.addTextDynamicAll();
+      // if (this.state.iframeLoaded) {
+      //   console.log('drawStackHasDrawn --- iframeLoaded')
+      //   this.hideTextIframe(this.state.iframe);
+      // };
+      await this.drawGridFull();
+    } catch (err) {
+      console.error('drawStackHasDrawn()', err);
+      return null;
+    };
   };
 
 
@@ -346,11 +417,11 @@ export default class App extends PureComponent {
     // this.setState({ iframe: false }, async () => {
       await this.addTextStaticAll();
       await this.addTextDynamicAll();
-      this.grid.current.style.opacity = 0;
+      this._gridRef.current.style.opacity = 0;
       await this.drawGridFull();
       await this.helpIframe(this.state.iframe)
       await this.showIframe();
-      this.grid.current.style.opacity = 1;
+      this._gridRef.current.style.opacity = 1;
       // this.setState({ iframe });
     // });
 
@@ -369,67 +440,64 @@ export default class App extends PureComponent {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// ** D3 ** //
+// ** D3 Methods ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-  async drawGridFull() {
-    const { celWidth, celHeight } = this.params;
-
-    return (
-      d3.select(this.grid.current)
-        .selectAll('div').data(this.gridText, d => d.id)
-        .enter().append('div')
-        .interrupt()
-          .attr('id', d => d.id)
-          .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
-          .text(d => d.text)
-          .style('left', d => d.c * celWidth + 'px')
-          .style('top', d => d.r * celHeight + 'px')
-          .style('width', celWidth + 'px')
-          .style('height', celHeight + 'px')
-          .style('color', d => d.color ? d.color : null)
-          .style('opacity', 0)
-        .transition()
-          .delay(d => d.delay)
-          .style('opacity', 1)
-          .on('end', d => {
-            d.active = false;
-            delete d.delay;
-          })
-        .end()
-    );
+  drawGridFull() {
+    return this._gridNode
+      .selectAll('div')
+        .data(this.gridText, d => d.id)
+      .enter()
+        .append('div')
+      .interrupt()
+        .attr('id', d => d.id)
+        .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
+        .text(d => d.text)
+        .style('left', d => d.c * this.params.celWidth + 'px')
+        .style('top', d => d.r * this.params.celHeight + 'px')
+        // .style('width', this.params.celWidth + 'px')
+        // .style('height', this.params.celHeight + 'px')
+        .style('color', d => d.color ? d.color : null)
+        .style('opacity', 0)
+      .transition()
+        .delay(d => d.delay)
+        .style('opacity', 1)
+        .on('end', d => {
+          d.active = false;
+          delete d.delay;
+        })
+      .end();
   };
 
 
-  async drawGridCustom(cels) {
-    return (
-      d3.select(this.grid.current)
-        .selectAll('div').data(cels, d => d.id)
-          .interrupt()
-            .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
-          .transition()
-            .duration(100)
-            .delay(d => d.delay || this.proto.randomDelay())
-            .style('opacity', 0)
-          .transition()
-            .duration(100)
-            .text(d => d.text)
-            .style('color', d => d.color || null)
-            .style('opacity', d => d.hidden ? 0 : 1)
-            .on('end', d => {
-              d.active = false;
-              delete d.delay;
-            })
-          .end()
-      );
+  drawGridCustom(cels) {
+    return this._gridNode
+      .selectAll('div')
+        .data(cels, d => d.id)
+      .interrupt()
+        .attr('class', d => 'cel' + (d.cl ? ' ' + d.cl : ''))
+      .transition()
+        .duration(100)
+        .delay(d => d.delay || this.randomDelay)
+        .style('opacity', 0)
+      .transition()
+        .duration(100)
+        .text(d => d.text)
+        .style('color', d => d.color || null)
+        .style('opacity', d => d.hidden ? 0 : 1)
+        .on('end', d => {
+          d.active = false;
+          delete d.delay;
+        })
+      .end();
   };
 
 
   drawGridLetterSwap(cel) {
-    cel.text = this.proto.randomLetter();
-    d3.select(this.grid.current)
-      .select(`#${cel.id}`).datum(cel, d => d.id)
+    cel.text = this.randomLetter;
+    return this._gridNode
+      .select(`#${cel.id}`)
+        .datum(cel, d => d.id)
       .interrupt()
         .attr('class', 'cel')
       .transition()
@@ -442,23 +510,22 @@ export default class App extends PureComponent {
   };
 
 
-  async undrawGridFull() {
-    return (
-      d3.select(this.grid.current)
-        .selectAll('div').data(this.gridText, d => d.id)
-          .interrupt()
-          .transition()
-            .duration(100)
-            .delay(() => this.proto.randomDelay())
-            .style('opacity', 0)
-            .remove()
-          .end()
-    );
+  undrawGridFull() {
+    return this._gridNode
+      .selectAll('div')
+        .data(this.gridText, d => d.id)
+      .interrupt()
+      .transition()
+        .duration(100)
+        .delay(() => this.randomDelay)
+        .style('opacity', 0)
+        .remove()
+      .end();
   };
 
 
   eraseGrid() {
-    d3.select(this.grid.current)
+    this._gridNode
       .selectAll('div')
         .remove();
   };
@@ -472,7 +539,7 @@ export default class App extends PureComponent {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-  async iframeGetSize(ratio) {
+  iframeGetSize(ratio) {
     const { cols, rows } = this.params;
     const { celRatio } = gridRules;
 
@@ -499,7 +566,7 @@ export default class App extends PureComponent {
   };
 
 
-  async iframeGetHiddenCels({ startCol, endCol, startRow, endRow }) {
+  iframeGetHiddenCels({ startCol, endCol, startRow, endRow }) {
     const len = (endCol - startCol) * (endRow - startRow);
     const cels = [];
     let i = 0
@@ -513,7 +580,7 @@ export default class App extends PureComponent {
       ) {
         cel.active = true;
         cel.hidden = true;
-        cel.delay = this.proto.randomDelay() * 3;
+        cel.delay = this.randomDelay * 3;
         cels.push(cel);
       };
     };
@@ -522,23 +589,23 @@ export default class App extends PureComponent {
   };
 
 
-  async iframeGetMaskedCels() {
-    return Promise.all(this.gridText
+  iframeGetMaskedCels() {
+    return this.gridText
       .filter(a => a.static && !a.hidden)
       .map((d, i, a) => {
         d.snapshot = Object.assign({}, d);
         d.masked = true;
         d.active = true;
-        d.text = this.proto.randomLetter();
-        d.delay = this.proto.randomDelay();
+        d.text = this.randomLetter;
+        d.delay = this.randomDelay;
         ['cl', 'color', 'static', 'action'].forEach(key => delete d[key]);
         return d;
-      })
-    );
+      });
   };
 
 
-  async iframeSetStyle(corners) {
+
+  iframeSetStyle(corners) {
     const c1 = d3.select('#' + corners[0].id).node();
     const c2 = d3.select('#' + corners[1].id).node();
 
@@ -551,34 +618,69 @@ export default class App extends PureComponent {
   };
 
 
-  async iframeAddText() {
+  // hideTextIframe(value) {
+  //   const { ratio } = iframes[value];
+  //   const dimen = this.iframeGetSize(ratio);
+  //   const hidden = this.iframeGetHiddenCels(dimen);
+  //   const masked = this.iframeGetMaskedCels();
+  //   const corners = [hidden[0], hidden[hidden.length - 1]];
+  //   this.iframeQueue = {
+  //     queue: [...hidden, ...masked],
+  //     corners,
+  //   };
+  // };
+
+
+  iframeAddText() {
     // const { date, git, name, tech, url } = this.proto.iframes[this.state.iframe];
 
   };
 
 
-  async helpIframe(value) {
+
+
+
+
+
+  helpIframe(value) {
     const { ratio } = iframes[value];
-    const dimen = await this.iframeGetSize(ratio);
-    const hidden = await this.iframeGetHiddenCels(dimen);
+    const dimen = this.iframeGetSize(ratio);
+    const hidden = this.iframeGetHiddenCels(dimen);
     const corners = [hidden[0], hidden[hidden.length - 1]];
-    this.iframeBoxLayout = await this.iframeSetStyle(corners);
-    const masked = await this.iframeGetMaskedCels();
-    this.queue = [...hidden, ...masked];
+    this.iframeBoxLayout = this.iframeSetStyle(corners);
+    const masked = this.iframeGetMaskedCels();
+    this.iframeQueue = [...hidden, ...masked];
     this.setState({ iframe: value });
   };
 
 
   async showIframe() {
-    await this.drawGridCustom(this.queue);
+    await this.drawGridCustom(this.iframeQueue);
   };
+
+
+
+
+  // helpIframe(value) {
+  //   this.hideTextIframe(value);
+  //   this.setState({ iframe: value });
+  //   // this.iframeBoxLayout = this.iframeSetStyle(corners);
+  //   // this.queue = [...hidden, ...masked];
+  // };
+
+
+  // async showIframe() {
+  //   const { queue, corners } = this.iframeQueue;
+  //   this.iframeBoxLayout = this.iframeSetStyle(corners);
+  //   await this.drawGridCustom(queue);
+  // };
 
 
   async clearIframe() {
     this.setState({ iframeLoaded: false }, async () => {
-      const queue = await Promise.all(this.queue.map(d => {
+      const queue = this.iframeQueue.map(d => {
         d.active = true;
-        d.delay = this.proto.randomDelay() * 3;
+        d.delay = this.randomDelay * 3;
         if (d.hidden) {
           delete d.hidden;
         } else if (d.masked) {
@@ -587,7 +689,7 @@ export default class App extends PureComponent {
           delete d.masked;
         };
         return d;
-      }));
+      });
       await this.drawGridCustom(queue);
       this.setState({ iframe: false });
     });
@@ -598,48 +700,21 @@ export default class App extends PureComponent {
 // ** Handler Helpers ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-
   helpRedraw() {
     return setTimeout(() => {
-      // this.setState(
-      //   { isResizing: false, iframeLoaded: false },
-      //   async () => {
-      //     await this.config();
-      //     await this.draw();
-      //     // if (iframe) {
-      //     //   await this.helpIframe(iframe);
-      //     // };
-      //   }
-      // );
-
       const { iframe } = this.state;
       this.setState(
         { isResizing: false, iframe: false, iframeLoaded: false },
+        // { isResizing: false, iframeVisible: false },
         async () => {
-          await this.config();
+          this.config();
           await this.draw();
           if (iframe) {
-            await this.helpIframe(iframe);
+            this.helpIframe(iframe);
           };
         }
       );
     }, this.props.isMobile ? 0 : 500);
-
-
-
-    // return setTimeout(() => {
-    //   this.setState({ isResizing: false, iframeLoaded: false }, () => {
-    //     this.config(this.grid.current)
-    //       .then(() => this.draw())
-    //       .then(async () => {
-    //         if (!this.state.iframe) return null;
-    //         this.setState({ iframeLoaded: true }, async () => {
-    //           await this.helpIframe(this.state.iframe);
-    //           return await this.showIframe();
-    //         })
-    //       })
-    //   });
-    // }, 500);
   };
 
 
@@ -661,13 +736,19 @@ export default class App extends PureComponent {
     if (!active) {
       this.setState(prevState =>
         ({ active: { ...prevState.active, [cl]: now } }),
-        () => this.addTextDynamic(this.content[cl])
-          .then(queue => this.drawGridCustom(queue))
-          .catch(err => console.log('helpToggleDynamicText() caught', err))
+        async () => {
+          try {
+            const queue = this.addTextDynamic(this.content[cl]);
+            await this.drawGridCustom(queue);
+            return;
+          } catch (err) {
+            console.log('helpToggleDynamicText() caught', err);
+          };
+        }
       );
     } else if (now - active > 500) {
-      this.removeTextDynamic(cl)
-        .then(queue => this.drawGridCustom(queue))
+      const queue = this.removeTextDynamic(cl)
+      this.drawGridCustom(queue)
         .catch(err => this.drawGridLetterSwap(err))
         .then(() => this.setState(prevState =>
           ({ active: { ...prevState.active, [cl]: false } }),
@@ -715,6 +796,11 @@ export default class App extends PureComponent {
 // ** Event Handlers ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+  getCelById(id) {
+    if (!id) return null;
+    return this.gridText[parseInt(id.slice(3), 10)];
+  };
+
 
   handleResize() {
     clearTimeout(this.resizeTimeout);
@@ -740,7 +826,7 @@ export default class App extends PureComponent {
     if (!id.includes('cel') || (timeStamp - this.lastMouseEvent < 16)) return null;
 
     this.lastMouseEvent = timeStamp;
-    const cel = this.gridText[parseInt(id.slice(3))];
+    const cel = this.getCelById(id);
 
     this.helpCombinedHover(cel);
   };
@@ -750,7 +836,7 @@ export default class App extends PureComponent {
     e.preventDefault();
     const { clientX, clientY } = e.changedTouches[0];
     const el = document.elementFromPoint(clientX, clientY);
-    const cel = el ? this.gridText[parseInt(el.id.slice(3))] : null;
+    const cel = this.getCelById(el.id);
 
     if (!cel) return null;
 
@@ -761,13 +847,14 @@ export default class App extends PureComponent {
   handleClick({ target: { id } }) {
     if (!id.includes('cel')) return null;
 
-    const cel = this.gridText[parseInt(id.slice(3))];
+    const cel = this.getCelById(id);
 
     this.helpClick(cel);
   };
 
 
   handleIframeLoad(e) {
+    console.log('iframeLoad')
     if (!this.state.iframe) return null;
     this.setState({ iframeLoaded: true }, () => {
       this.showIframe();
@@ -778,63 +865,6 @@ export default class App extends PureComponent {
 
 
 
-////////////////////////////////////////////////////////////////////////////////
-// ** Getters ** //
-////////////////////////////////////////////////////////////////////////////////
-
-
-  get gridStyle() {
-    if (!this.state.hasConfig) return null;
-    return {
-      fontSize: this.params.celHeight + 'px',
-      lineHeight: (this.params.celHeight * .9).toFixed(2) + 'px',
-      marginLeft: this.params.marginX + 'px',
-      marginTop: this.params.marginY + 'px',
-    };
-  };
-
-
-  get mainStyle() {
-    if (!this.props.isMobile) return null;
-    return {
-      width: '100%',
-      height: '100%',
-      userSelect: 'none !important',
-    };
-  };
-
-
-  get iframeBoxStyle() {
-    const { iframe, iframeLoaded, isResizing } = this.state;
-    if (!iframe) return null;
-    const style = {...this.iframeBoxLayout};
-    if (isResizing) {
-      return style;
-    };
-    if (iframeLoaded) {
-      return Object.assign(style, {
-        transform: 'scale(.99)',
-        opacity: 1,
-        pointerEvents: 'auto',
-        zIndex: 300,
-      });
-    };
-    return style;
-  };
-
-
-  get iframeStyle() {
-    if (!this.state.iframe) return null;
-    return {
-      transform: `scale(${iframes[this.state.iframe].scale})`,
-    };
-  };
-
-
-  get iframeUrl() {
-    if (!this.state.iframe) return null;
-    return iframes[this.state.iframe].url;
-  };
 
 
 
@@ -852,11 +882,12 @@ export default class App extends PureComponent {
       <div id="App">
         <div
           id="Main"
+          className={this.props.isMobile ? 'mobile' : null}
           style={this.mainStyle}
           onMouseMove={this.handleMouseMove}
           onClick={this.handleClick}
         >
-          <div id="Grid" ref={this.grid} style={this.gridStyle} />
+          <div id="Grid" ref={this._gridRef} style={this.gridStyle} />
           <div id="IframeBox" style={this.iframeBoxStyle}>
             <iframe
               src={this.iframeUrl}

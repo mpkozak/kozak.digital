@@ -20,6 +20,12 @@
   user-select: none;
 }
 
+#Main.mobile {
+  width: 100%;
+  height: 100%;
+  user-select: none !important;
+}
+
 
 
 #Grid {
@@ -30,11 +36,17 @@
 
 #Grid>.cel {
   position: absolute;
+  width: var(--cel-width);
+  width: var(--cel-height);
   font-size: inherit;
   color: #4A4B4D;
   text-align: center;
   background: transparent;
   z-index: 200;
+}
+
+#Grid>.cel.menu {
+  cursor: context-menu;
 }
 
 #Grid>.cel.projects {
