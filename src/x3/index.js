@@ -5,8 +5,6 @@ import App from './App.js';
 
 
 
-
-
 const isMobile = (() => {
   if (navigator.userAgent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone/i)) {
     return true;
@@ -18,4 +16,4 @@ const isMobile = (() => {
 
 
 
-ReactDOM.render(<App isMobile={isMobile}/>, document.getElementById('root'));
+ReactDOM.render(<App isMobile={isMobile} />, document.getElementById('root'));

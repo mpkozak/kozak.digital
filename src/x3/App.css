@@ -20,11 +20,6 @@
   user-select: none;
 }
 
-#Main.mobile {
-  width: 100%;
-  height: 100%;
-  user-select: none !important;
-}
 
 
 #Grid {
@@ -69,10 +64,6 @@
   transform: scale(0);
   transition: opacity 1s ease, transform 1s ease;
 }
-
-
-
-
 
 #IframeBox>iframe {
   position: absolute;

@@ -1,0 +1,38 @@
+
+
+componentDidMount() =
+  config()
+    draw()
+    CATCH
+
+
+
+config() =
+  configContentLayout()
+  configCelSize()
+  configGridSize()
+    setState()
+  CATCH
+
+
+draw() =
+  addTextInitial()
+  drawStackHasDrawn() || drawStackInitial()
+  CATCH
+
+
+drawStackInitial() =
+  drawGridFull()
+  addTextStatic()
+  drawGridCustom()
+    setState()
+  CATCH
+
+
+drawStackHasDrawn() =
+  addTextStatic()
+  addTextDynamic()
+  drawGridFull()
+  CATCH
+
+
