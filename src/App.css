@@ -36,8 +36,8 @@
 
 #Grid>.cel {
   position: absolute;
-  width: var(--cel-width);
-  width: var(--cel-height);
+  /*width: var(--cel-width);*/
+  /*width: var(--cel-height);*/
   font-size: inherit;
   color: #4A4B4D;
   text-align: center;

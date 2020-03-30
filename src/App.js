@@ -179,8 +179,8 @@ export default class App extends PureComponent {
 
     celHeight = Math.round(celHeight);
     celWidth = Math.round(celWidth);
-    document.documentElement.style.setProperty('--cel-width', celWidth + 'px');
-    document.documentElement.style.setProperty('--cel-height', celHeight + 'px');
+    // document.documentElement.style.setProperty('--cel-width', celWidth + 'px');
+    // document.documentElement.style.setProperty('--cel-height', celHeight + 'px');
 
     const cols = Math.floor(clientWidth / celWidth);
     const rows = Math.floor(clientHeight / celHeight);
@@ -425,8 +425,8 @@ export default class App extends PureComponent {
         .text(d => d.text)
         .style('left', d => d.c * this.params.celWidth + 'px')
         .style('top', d => d.r * this.params.celHeight + 'px')
-        // .style('width', this.params.celWidth + 'px')
-        // .style('height', this.params.celHeight + 'px')
+        .style('width', this.params.celWidth + 'px')
+        .style('height', this.params.celHeight + 'px')
         .style('color', d => d.color ? d.color : null)
         .style('opacity', 0)
       .transition()
@@ -578,9 +578,9 @@ export default class App extends PureComponent {
     const c2 = d3.select('#' + corners[1].id).node();
 
     return {
-      left: c1.offsetLeft + this.params.marginX + this.params.celWidth / 2 + 'px',
+      left: c1.offsetLeft + this.params.marginX + 'px',
       top: c1.offsetTop + this.params.marginY + 'px',
-      width: c2.offsetWidth + c2.offsetLeft - c1.offsetLeft - this.params.celWidth + 'px',
+      width: c2.offsetWidth + c2.offsetLeft - c1.offsetLeft + 'px',
       height: c2.offsetHeight + c2.offsetTop - c1.offsetTop + 'px',
     };
   };
