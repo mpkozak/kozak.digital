@@ -23,12 +23,11 @@ export default class App extends PureComponent {
       iframe: false,
       iframeLoaded: false,
     };
-    this._alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
 
+    this._alpha = ('qwertyuiopasdfghjklzxcvbnm').split('');
 
     this._gridRef = React.createRef();
     this._gridNode = undefined;
-
 
     this.params = {};
     this.content = {};
@@ -62,6 +61,7 @@ export default class App extends PureComponent {
       lineHeight: (this.params.celHeight * .9).toFixed(2) + 'px',
       marginLeft: this.params.marginX + 'px',
       marginTop: this.params.marginY + 'px',
+      cursor: this.state.iframeLoaded ? 'zoom-out' : 'default',
     };
   };
 
@@ -179,14 +179,13 @@ export default class App extends PureComponent {
 
     celHeight = Math.round(celHeight);
     celWidth = Math.round(celWidth);
+    document.documentElement.style.setProperty('--cel-width', celWidth + 'px');
+    document.documentElement.style.setProperty('--cel-height', celHeight + 'px');
 
     const cols = Math.floor(clientWidth / celWidth);
     const rows = Math.floor(clientHeight / celHeight);
     const marginX = Math.round((clientWidth - cols * celWidth) / 2);
     const marginY = Math.round((clientHeight - rows * celHeight) / 2);
-
-    document.documentElement.style.setProperty('--cel-width', celWidth + 'px');
-    document.documentElement.style.setProperty('--cel-height', celHeight + 'px');
 
     return {
       displayLayout,
@@ -366,7 +365,6 @@ export default class App extends PureComponent {
 // ** Draw Functions ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-
   async draw() {
     this.addTextInitial();
     try {
@@ -377,7 +375,7 @@ export default class App extends PureComponent {
       await this.drawStackInitial();
       return;
     } catch (err) {
-      console.error('draw()', err);
+      // console.error('draw()', err);
       return null;
     };
   };
@@ -390,7 +388,7 @@ export default class App extends PureComponent {
       await Promise.all(staticText.map(d => this.drawGridCustom(d)));
       this.setState({ hasDrawn: true });
     } catch (err) {
-      console.error('drawStackInitial()', err);
+      // console.error('drawStackInitial()', err);
       return null;
     };
   };
@@ -400,39 +398,11 @@ export default class App extends PureComponent {
     try {
       this.addTextStaticAll();
       this.addTextDynamicAll();
-      // if (this.state.iframeLoaded) {
-      //   console.log('drawStackHasDrawn --- iframeLoaded')
-      //   this.hideTextIframe(this.state.iframe);
-      // };
       await this.drawGridFull();
     } catch (err) {
-      console.error('drawStackHasDrawn()', err);
+      // console.error('drawStackHasDrawn()', err);
       return null;
     };
-  };
-
-
-  async drawStackIframe() {
-    // const { iframe } = this.state;
-    // this.setState({ iframe: false }, async () => {
-      await this.addTextStaticAll();
-      await this.addTextDynamicAll();
-      this._gridRef.current.style.opacity = 0;
-      await this.drawGridFull();
-      await this.helpIframe(this.state.iframe)
-      await this.showIframe();
-      this._gridRef.current.style.opacity = 1;
-      // this.setState({ iframe });
-    // });
-
-
-
-    // this.addTextStaticAll()
-    // return this.addTextStaticAll()
-
-    //   .then(() => this.addTextDynamicAll())
-    //   .then(() => this.drawGridFull())
-    //   .catch(err => console.error('drawStackHasDrawn()', err));
   };
 
 
@@ -538,7 +508,6 @@ export default class App extends PureComponent {
 // ** Iframe Methods ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-
   iframeGetSize(ratio) {
     const { cols, rows } = this.params;
     const { celRatio } = gridRules;
@@ -604,52 +573,61 @@ export default class App extends PureComponent {
   };
 
 
-
   iframeSetStyle(corners) {
     const c1 = d3.select('#' + corners[0].id).node();
     const c2 = d3.select('#' + corners[1].id).node();
 
     return {
-      left: c1.offsetLeft + this.params.marginX + 'px',
+      left: c1.offsetLeft + this.params.marginX + this.params.celWidth / 2 + 'px',
       top: c1.offsetTop + this.params.marginY + 'px',
-      width: c2.offsetWidth + c2.offsetLeft - c1.offsetLeft + 'px',
+      width: c2.offsetWidth + c2.offsetLeft - c1.offsetLeft - this.params.celWidth + 'px',
       height: c2.offsetHeight + c2.offsetTop - c1.offsetTop + 'px',
     };
   };
 
 
-  // hideTextIframe(value) {
-  //   const { ratio } = iframes[value];
-  //   const dimen = this.iframeGetSize(ratio);
-  //   const hidden = this.iframeGetHiddenCels(dimen);
-  //   const masked = this.iframeGetMaskedCels();
-  //   const corners = [hidden[0], hidden[hidden.length - 1]];
-  //   this.iframeQueue = {
-  //     queue: [...hidden, ...masked],
-  //     corners,
-  //   };
-  // };
 
+  iframeAddText(value, bottomRow) {
+    const { rows, cols } = this.params;
+    const availRows = rows - (bottomRow + 1);
+    // const { date, git, name, tech, url } = iframes[value];
+    const { url } = iframes[value];
 
-  iframeAddText() {
-    // const { date, git, name, tech, url } = this.proto.iframes[this.state.iframe];
+    const centerRow = Math.round(availRows / 2) + bottomRow;
+    const linkText = url.split('//')[1];
+    const linkStartCol = Math.round((cols - linkText.length) / 2);
+    const linkStartIndex = this.gridText.findIndex(a => a.r === centerRow && a.c === linkStartCol);
 
+    const queue = [];
+
+    linkText.split('').forEach((char, i) => {
+      if (char === ' ') return null;
+
+      const cel = this.gridText[linkStartIndex + i];
+      cel.active = true;
+      cel.static = true;
+      cel.text = char;
+      cel.color = '#FFAF24';
+      cel.action = { url: url };
+      cel.cl = 'iframe';
+
+      queue.push(cel);
+    });
+
+    return queue;
   };
-
-
-
-
 
 
 
   helpIframe(value) {
     const { ratio } = iframes[value];
     const dimen = this.iframeGetSize(ratio);
+    const masked = this.iframeGetMaskedCels();
     const hidden = this.iframeGetHiddenCels(dimen);
     const corners = [hidden[0], hidden[hidden.length - 1]];
+    const text = this.iframeAddText(value, corners[1].r);
     this.iframeBoxLayout = this.iframeSetStyle(corners);
-    const masked = this.iframeGetMaskedCels();
-    this.iframeQueue = [...hidden, ...masked];
+    this.iframeQueue = [...hidden, ...masked, ...text];
     this.setState({ iframe: value });
   };
 
@@ -659,25 +637,9 @@ export default class App extends PureComponent {
   };
 
 
-
-
-  // helpIframe(value) {
-  //   this.hideTextIframe(value);
-  //   this.setState({ iframe: value });
-  //   // this.iframeBoxLayout = this.iframeSetStyle(corners);
-  //   // this.queue = [...hidden, ...masked];
-  // };
-
-
-  // async showIframe() {
-  //   const { queue, corners } = this.iframeQueue;
-  //   this.iframeBoxLayout = this.iframeSetStyle(corners);
-  //   await this.drawGridCustom(queue);
-  // };
-
-
   async clearIframe() {
     this.setState({ iframeLoaded: false }, async () => {
+      this.removeTextDynamic('iframe');
       const queue = this.iframeQueue.map(d => {
         d.active = true;
         d.delay = this.randomDelay * 3;
@@ -690,28 +652,33 @@ export default class App extends PureComponent {
         };
         return d;
       });
+
       await this.drawGridCustom(queue);
       this.setState({ iframe: false });
     });
   };
 
 
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // ** Handler Helpers ** //
 ////////////////////////////////////////////////////////////////////////////////
 
+  getCelById(id) {
+    if (!id) return null;
+    return this.gridText[parseInt(id.slice(3), 10)];
+  };
+
+
   helpRedraw() {
     return setTimeout(() => {
-      const { iframe } = this.state;
       this.setState(
         { isResizing: false, iframe: false, iframeLoaded: false },
-        // { isResizing: false, iframeVisible: false },
         async () => {
           this.config();
           await this.draw();
-          if (iframe) {
-            this.helpIframe(iframe);
-          };
         }
       );
     }, this.props.isMobile ? 0 : 500);
@@ -742,7 +709,8 @@ export default class App extends PureComponent {
             await this.drawGridCustom(queue);
             return;
           } catch (err) {
-            console.log('helpToggleDynamicText() caught', err);
+            // console.error('helpToggleDynamicText()', err);
+            return null;
           };
         }
       );
@@ -796,12 +764,6 @@ export default class App extends PureComponent {
 // ** Event Handlers ** //
 ////////////////////////////////////////////////////////////////////////////////
 
-  getCelById(id) {
-    if (!id) return null;
-    return this.gridText[parseInt(id.slice(3), 10)];
-  };
-
-
   handleResize() {
     clearTimeout(this.resizeTimeout);
 
@@ -854,7 +816,6 @@ export default class App extends PureComponent {
 
 
   handleIframeLoad(e) {
-    console.log('iframeLoad')
     if (!this.state.iframe) return null;
     this.setState({ iframeLoaded: true }, () => {
       this.showIframe();
@@ -865,15 +826,9 @@ export default class App extends PureComponent {
 
 
 
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // ** Render ** //
 ////////////////////////////////////////////////////////////////////////////////
-
 
   render() {
     const { iframe } = this.state;

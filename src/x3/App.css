@@ -46,7 +46,7 @@
 }
 
 #Grid>.cel.menu {
-  cursor: context-menu;
+  cursor: alias;
 }
 
 #Grid>.cel.projects {
@@ -62,6 +62,10 @@
   -webkit-touch-callout: text;
   -webkit-user-select: text;
   user-select: text;
+}
+
+#Grid>.cel.iframe {
+  cursor: alias;
 }
 
 
