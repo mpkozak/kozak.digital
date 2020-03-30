@@ -27,8 +27,8 @@
 }
 
 
-
 #Grid {
+  background-color: green;
   position: absolute;
   width: 100%;
   height: 100%;
@@ -36,17 +36,11 @@
 
 #Grid>.cel {
   position: absolute;
-  width: var(--cel-width);
-  width: var(--cel-height);
   font-size: inherit;
   color: #4A4B4D;
   text-align: center;
   background: transparent;
   z-index: 200;
-}
-
-#Grid>.cel.menu {
-  cursor: alias;
 }
 
 #Grid>.cel.projects {
@@ -64,10 +58,6 @@
   user-select: text;
 }
 
-#Grid>.cel.iframe {
-  cursor: alias;
-}
-
 
 
 #IframeBox {
@@ -80,6 +70,10 @@
   transform: scale(0);
   transition: opacity 1s ease, transform 1s ease;
 }
+
+
+
+
 
 #IframeBox>iframe {
   position: absolute;
