@@ -791,7 +791,7 @@ export default class App extends PureComponent {
     e.preventDefault();
     const { clientX, clientY } = e.changedTouches[0];
     const el = document.elementFromPoint(clientX, clientY);
-    const cel = this.getCelById(el.id);
+    const cel = this.getCelById(!!el && el.id);
 
     if (!cel) return null;
 

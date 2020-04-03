@@ -58,7 +58,8 @@ export default function getContent(displayLayout = 'desktop') {
               : { url: 'https://kozak.digital/sleepy' },
           },
           {
-            str: 'αdex',
+            // str: 'αdex',
+            str: `${String.fromCharCode(0x03B1)}dex`,
             action: displayLayout === 'desktop'
               ? { iframe: 'adex' }
               : { url: 'https://kozak.digital/adex' },

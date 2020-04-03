@@ -1,8 +1,23 @@
+
+/*2008 The Monotype Corporation. All Rights Reserved.*/
+
+@font-face {
+  font-family: 'Courier Combined';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Courier New'), url('./_fonts/Courier New V1.woff2') format('woff2'), url('./_fonts/Courier New V1.woff') format('woff'), url('./_fonts/Courier New V1.ttf') format('truetype');
+}
+
+
+
+
+
 * {
   margin: 0;
   padding: 0;
   background-color: #1A1C1E;
-  font-family: 'Courier New', 'Courier', monospace;
+  /*font-family: 'Courier New', 'Courier', monospace;*/
+  font-family: 'Courier Combined', monospace;
   font-weight: 100;
   box-sizing: border-box;
 }
