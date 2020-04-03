@@ -239,10 +239,7 @@ export default class App extends PureComponent {
 
     const calcDelay = (r, c) => {
       return Math.floor(
-        dScale * (
-          tScalar * ((2 * r) + c)
-          + Math.random()
-        )
+        dScale * ((tScalar * ((2 * r) + c)) + Math.random())
       );
     };
 
@@ -305,24 +302,23 @@ export default class App extends PureComponent {
   addTextDynamic({ activeCl, onHover: { color, data, total } }) {
     const queue = [];
 
-    data.forEach((d, i) => {
+    data.forEach(d => {
       const startIndex = d.startIndex + (
         this.props.isMobile
           ? Math.round(1 * (Math.random() - .5))
           : Math.round(3 * (Math.random() - .5))
       );
 
-      d.str.split('').forEach((char, j) => {
+      d.str.split('').forEach((char, i) => {
         if (char === ' ') return null;
 
-        const cel = this.gridText[startIndex + j];
+        const cel = this.gridText[startIndex + i];
         cel.active = true;
         cel.static = true;
         cel.cl = activeCl;
         cel.text = char;
         cel.color = color;
-        cel.delay =
-          Math.floor(((queue.length / total) + Math.random()) * 250);
+        cel.delay = Math.floor(((queue.length / total) + Math.random()) * 250);
         if (d.action) {
           cel.action = d.action;
         };
@@ -349,8 +345,7 @@ export default class App extends PureComponent {
     return cels.map((d, i, a) => {
       d.text = this.randomLetter;
       d.active = true;
-      d.delay =
-        Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
+      d.delay = Math.floor((((a.length - i) / a.length) + Math.random()) * 250);
       ['cl', 'activeCl', 'color', 'static', 'action'].forEach(key => delete d[key]);
       return d;
     });
