@@ -586,7 +586,6 @@ export default class App extends PureComponent {
   };
 
 
-
   iframeAddText(value, bottomRow) {
     const { rows, cols } = this.params;
     const availRows = rows - (bottomRow + 1);
@@ -616,7 +615,6 @@ export default class App extends PureComponent {
 
     return queue;
   };
-
 
 
   helpIframe(value) {
@@ -831,8 +829,6 @@ export default class App extends PureComponent {
 ////////////////////////////////////////////////////////////////////////////////
 
   render() {
-    const { iframe } = this.state;
-
     return (
       <div id="App">
         <div
