@@ -51,11 +51,17 @@ export default function getContent(displayLayout = 'desktop') {
               ? { iframe: 'drive' }
               : { url: 'https://kozak.digital/drive' },
           },
+          // {
+          //   str: 'sleepy',
+          //   action: displayLayout === 'desktop'
+          //     ? { iframe: 'sleepy' }
+          //     : { url: 'https://kozak.digital/sleepy' },
+          // },
           {
-            str: 'sleepy',
+            str: 'pxcels',
             action: displayLayout === 'desktop'
-              ? { iframe: 'sleepy' }
-              : { url: 'https://kozak.digital/sleepy' },
+              ? { iframe: 'pxcels' }
+              : { url: 'https://kozak.digital/pxcels' },
           },
           {
             // str: 'αdex',
